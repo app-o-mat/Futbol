@@ -1,0 +1,57 @@
+Make Futbol Game
+================
+
+x=done, *=working, ^=maybe fixed, - is a subtask
+
+[x] Make a shell with green background
+[x] Add in rectangle player
+[x] Put up score
+[x] Get measurements for field
+[x] Made soccer ball sprite
+[x] Made player sprite
+[x] Made grass tile
+[x] Made field background
+[x] Add assets into game
+  - [x] soccer ball
+  - [x] player
+  - [x] grass tile
+  - [x] field
+[x] Put the sprites on the screen
+  - [x] soccer ball
+  - [x] player
+  - [x] grass tile
+  - [x] field
+[x] Animate player
+[x] Make the keyboard control the player
+[x] dribble the ball
+[x] bug: when you rotate while kicking the ball
+[x] put other player on the screen
+[x] control other player
+[x] put a goal on the screen
+[x] make the goal net easier to see
+[x] kick the ball
+[x] add goal net to screen
+[x] detect if ball is in goal
+[x] update score
+[x] add sounds
+[x] bug: keeps running if you spin but stop running
+
+[x] bug: ball in corner
+  x bouncing wall at the top
+  x bouncing wall on all side
+[x] goal on the left
+[x] defender on the left
+[x] another player on the field
+
+[x] bug: defender gets pushed by ball
+[x] bug: defender stops moving
+[x] bug: stop animating when not running
+[x] bug: knockback the players from the ball
+[x] bug: doesn't change direction when rotating
+
+[x] bug: go backwards
+[x] bug: need kick key for defender
+[x] bug: rotation doesn't keep going
+[x] bug: rotation too choppy
+
+[x] bug: do clock aritmetic correctly for angles

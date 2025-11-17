@@ -1,0 +1,15 @@
+Make Swim Meet Game
+================
+
+x=done, *=working, ^=maybe fixed, - is a subtask
+
+[x] Make a shell with the swim lanes background
+[ ] Add in a sprite with the top down swimmer half png
+[ ] Put up score
+[ ] Get measurements for field
+
+[ ] Animate player
+[ ] Make the keyboard control the player
+[ ] make the swimmer stroke
+[ ] put another player on the screen
+[ ] control other player
