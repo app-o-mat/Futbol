@@ -15,12 +15,12 @@ class SwimMeet extends Phaser.Scene {
     this.swimmer1 = new Swimmer(
       "swimmer1",
       "",
-      "/assets/swimmeet/red-swim-spritesheet.png",
+      "/assets/swimmeet/red-swim-spritesheet.png"
     );
     this.swimmer2 = new Swimmer(
       "swimmer2",
       "",
-      "/assets/swimmeet/blue-swim-spritesheet.png",
+      "/assets/swimmeet/blue-swim-spritesheet.png"
     );
 
     this.cursors = undefined;
@@ -62,13 +62,15 @@ class SwimMeet extends Phaser.Scene {
 
     // Check if one swimmer is ahead by more than 20 pixels
     const distanceDifference = Math.abs(
-      this.swimmer1.totalSwum - this.swimmer2.totalSwum,
+      this.swimmer1.totalSwum - this.swimmer2.totalSwum
     );
 
     if (distanceDifference > 20) {
       // Show alien and play animation
       if (!this.alien.visible) {
         this.alien.setVisible(true);
+        // mark that we're playing the alien animation forward
+        this.alien.playingForward = true;
         this.alien.anims.play("alienAnim", true);
       }
     }
@@ -94,6 +96,9 @@ class SwimMeet extends Phaser.Scene {
           this.losingSwimmer.swimForward(10);
 
           // Run the alien animation backwards to hide it
+          // mark that the animation is now running in reverse so the
+          // persistent handler won't re-trigger grenade throwing
+          this.alien.playingForward = false;
           this.alien.anims.playReverse("alienAnim", true);
           this.alien.once("animationcomplete", () => {
             this.alien.setVisible(false);
@@ -114,7 +119,7 @@ class SwimMeet extends Phaser.Scene {
     this.loadGrenade();
     this.loadSounds();
   }
-  
+
   loadSounds() {
     // Load grenade sounds
     this.load.audio("launchSound", "/assets/swimmeet/Launch.wav");
@@ -158,10 +163,10 @@ class SwimMeet extends Phaser.Scene {
   setUpKeyboardControls() {
     // Set up arrow key controls for swimmer 1
     const keyLeft = this.input.keyboard.addKey(
-      Phaser.Input.Keyboard.KeyCodes.LEFT,
+      Phaser.Input.Keyboard.KeyCodes.LEFT
     );
     const keyRight = this.input.keyboard.addKey(
-      Phaser.Input.Keyboard.KeyCodes.RIGHT,
+      Phaser.Input.Keyboard.KeyCodes.RIGHT
     );
 
     // Set up A/D key controls for swimmer 2
@@ -185,7 +190,7 @@ class SwimMeet extends Phaser.Scene {
       gameWidth,
       gameHeight,
       15,
-      gameHeight / 2 + 50,
+      gameHeight / 2 + 50
     );
 
     // Create alien sprite at center x, top third y
@@ -202,10 +207,16 @@ class SwimMeet extends Phaser.Scene {
     // Hide alien initially
     this.alien.setVisible(false);
 
-    // Listen for alien animation complete to throw grenade
-    this.alien.once("animationcomplete", () => {
-      // if the alien is visible, throw the grenade
-      if (this.alien.visible) {
+    // Listen for alien animation complete to throw grenade.
+    // Use a persistent handler but only trigger when the animation
+    // was running forward (we set `playingForward` when starting it).
+    this.alien.on("animationcomplete", (animation) => {
+      if (
+        animation &&
+        animation.key === "alienAnim" &&
+        this.alien.visible &&
+        this.alien.playingForward
+      ) {
         this.throwGrenade();
       }
     });
@@ -254,7 +265,7 @@ class SwimMeet extends Phaser.Scene {
     const speed = 100; // 10 pixels per second at 60 fps = 100 pixels per second
     this.grenade.body.setVelocity(
       (dx / distance) * speed,
-      (dy / distance) * speed,
+      (dy / distance) * speed
     );
 
     // Play launch sound
@@ -274,7 +285,7 @@ class SwimMeet extends Phaser.Scene {
       `Game Over`,
       {
         fontFamily: "helvetica",
-      },
+      }
     );
   }
 
