@@ -13,6 +13,117 @@ class ChessScene extends Phaser.Scene {
     super({ key: "ChessScene" });
   }
 
+  // Validate a proposed move: (piece, {col, row}) -> boolean
+  // Empty/placeholder for now — always allow moves.
+  isValidPawnMove(piece, target) {
+    const color = piece.getData("color");
+    const dir = color === "white" ? -1 : 1;
+    const row = piece.getData("row");
+    const col = piece.getData("col");
+    const tr = target.row;
+    const tc = target.col;
+
+    // Forward move
+    if (tc === col) {
+      // one square forward
+      if (tr === row + dir) {
+        return this.board[tr][tc] == null;
+      }
+      // two squares from starting rank
+      const startRow = color === "white" ? 6 : 1;
+      if (row === startRow && tr === row + 2 * dir) {
+        // both squares must be empty
+        const intermediateRow = row + dir;
+        return (
+          this.board[intermediateRow][tc] == null && this.board[tr][tc] == null
+        );
+      }
+      return false;
+    }
+
+    // Diagonal capture (including en passant)
+    if (Math.abs(tc - col) === 1 && tr === row + dir) {
+      // normal capture
+      const targetPiece = this.board[tr] && this.board[tr][tc];
+      if (targetPiece && targetPiece.getData("color") !== color) return true;
+
+      // en passant: target square empty but there is an enemy pawn adjacent that just double-moved
+      const adjacentRow = row; // enemy pawn sits on same row as moving pawn
+      const adjacentPiece =
+        this.board[adjacentRow] && this.board[adjacentRow][tc];
+      if (
+        adjacentPiece &&
+        adjacentPiece.getData("type") === "pawn" &&
+        adjacentPiece.getData("color") !== color &&
+        this.lastDoublePawn &&
+        this.lastDoublePawn.piece === adjacentPiece
+      ) {
+        return true;
+      }
+      return false;
+    }
+
+    return false;
+  }
+
+  isValidMove(piece, target) {
+    // Basic validation
+    if (!piece || !piece.getData) return true;
+
+    // If target square contains a same-color piece, move is invalid for any piece
+    if (
+      target &&
+      typeof target.row === "number" &&
+      typeof target.col === "number"
+    ) {
+      const tp = this.board[target.row] && this.board[target.row][target.col];
+      if (tp && tp.getData && tp.getData("color") === piece.getData("color"))
+        return false;
+    }
+
+    const type = piece.getData("type");
+    if (type === "pawn") return this.isValidPawnMove(piece, target);
+
+    // Queen movement: horizontal, vertical, diagonal any distance, no jumping
+    if (type === "queen") {
+      const row = piece.getData("row");
+      const col = piece.getData("col");
+      const tr = target.row;
+      const tc = target.col;
+
+      // can't stay in place
+      if (tr === row && tc === col) return false;
+
+      const dRow = tr - row;
+      const dCol = tc - col;
+
+      // determine direction: horizontal, vertical, or diagonal
+      const stepRow = dRow === 0 ? 0 : dRow / Math.abs(dRow);
+      const stepCol = dCol === 0 ? 0 : dCol / Math.abs(dCol);
+
+      // valid directions for queen: either stepRow==0 or stepCol==0 or abs(dRow)==abs(dCol)
+      if (
+        !(stepRow === 0 || stepCol === 0 || Math.abs(dRow) === Math.abs(dCol))
+      ) {
+        return false;
+      }
+
+      // walk from source towards target, but stop before target; ensure no blocking pieces
+      let r = row + stepRow;
+      let c = col + stepCol;
+      while (r !== tr || c !== tc) {
+        if (this.board[r] && this.board[r][c]) return false;
+        r += stepRow;
+        c += stepCol;
+      }
+
+      // target square either empty or occupied by enemy (same-color check handled earlier)
+      return true;
+    }
+
+    return true;
+  }
+
   preload() {
     // Load the white pawn image
     this.load.image("pawn", "/assets/chess/white-pawn.jpg");
@@ -45,15 +156,26 @@ class ChessScene extends Phaser.Scene {
     this.cols = cols;
     this.rows = rows;
 
+    // create and store square rectangles so we can highlight them later
+    this.squares = [];
     for (let r = 0; r < rows; r++) {
+      this.squares[r] = [];
       for (let c = 0; c < cols; c++) {
         const x = offsetX + c * tile + tile / 2;
         const y = offsetY + r * tile + tile / 2;
         const isLight = (r + c) % 2 === 0;
-        this.add
+        const rect = this.add
           .rectangle(x, y, tile, tile, isLight ? light : dark)
           .setOrigin(0.5);
+        rect.setData("row", r);
+        rect.setData("col", c);
+        this.squares[r][c] = rect;
       }
+    }
+    // initialize board occupancy array
+    this.board = new Array(rows);
+    for (let r = 0; r < rows; r++) {
+      this.board[r] = new Array(cols).fill(null);
     }
   }
 
@@ -80,6 +202,11 @@ class ChessScene extends Phaser.Scene {
       pawn.setInteractive({ cursor: "pointer" });
       this.input.setDraggable(pawn);
       pawn.setData("isPiece", true);
+      pawn.setData("type", "pawn");
+      pawn.setData("color", "white");
+      pawn.setData("row", pawnRow);
+      pawn.setData("col", c);
+      this.board[pawnRow][c] = pawn;
     }
 
     // Drag handlers: allow dragging pawns and snapping them to the nearest square
@@ -87,12 +214,19 @@ class ChessScene extends Phaser.Scene {
       if (!gameObject.getData || !gameObject.getData("isPiece")) return;
       gameObject.setDepth(2);
       gameObject.setAlpha(0.4);
+      // mark currently dragging piece for hover checks
+      this.draggingPiece = gameObject;
+      // store original board coords in case we need to snap back
+      gameObject.setData("origRow", gameObject.getData("row"));
+      gameObject.setData("origCol", gameObject.getData("col"));
     });
 
     this.input.on("drag", (pointer, gameObject, dragX, dragY) => {
       if (!gameObject.getData || !gameObject.getData("isPiece")) return;
       gameObject.x = dragX;
       gameObject.y = dragY;
+      // update highlight while dragging
+      this.updateHighlightAt(dragX, dragY, gameObject);
     });
 
     this.input.on("dragend", (pointer, gameObject) => {
@@ -114,11 +248,122 @@ class ChessScene extends Phaser.Scene {
       );
       const snapX = this.offsetX + col * this.tile + this.tile / 2;
       const snapY = this.offsetY + row * this.tile + this.tile / 2;
-      gameObject.x = snapX;
-      gameObject.y = snapY;
-      gameObject.setDepth(1);
-      gameObject.setAlpha(1);
+
+      const piece = gameObject;
+      const oldRow = piece.getData("row");
+      const oldCol = piece.getData("col");
+
+      // validate move
+      if (this.isValidMove(piece, { row, col })) {
+        // handle captures
+        const targetPiece = this.board[row][col];
+        // en passant capture: diagonal move into empty square
+        let performedEnPassant = false;
+        if (
+          piece.getData("type") === "pawn" &&
+          col !== oldCol &&
+          !targetPiece
+        ) {
+          // enemy pawn to capture sits on oldRow, col
+          const adjacent = this.board[oldRow] && this.board[oldRow][col];
+          if (
+            adjacent &&
+            adjacent === (this.lastDoublePawn && this.lastDoublePawn.piece)
+          ) {
+            // remove captured pawn
+            adjacent.destroy();
+            this.board[oldRow][col] = null;
+            performedEnPassant = true;
+          }
+        }
+
+        if (targetPiece) {
+          // normal capture
+          targetPiece.destroy();
+          this.board[row][col] = null;
+        }
+
+        // update board occupancy
+        this.board[oldRow][oldCol] = null;
+        this.board[row][col] = piece;
+
+        // place piece and update metadata
+        piece.x = snapX;
+        piece.y = snapY;
+        piece.setData("row", row);
+        piece.setData("col", col);
+
+        // track last double pawn move (for en passant)
+        if (piece.getData("type") === "pawn" && Math.abs(row - oldRow) === 2) {
+          this.lastDoublePawn = { piece, row, col };
+        } else {
+          // clear previous double pawn unless we just created one
+          this.lastDoublePawn = null;
+        }
+
+        gameObject.setDepth(1);
+        gameObject.setAlpha(1);
+      } else {
+        // invalid move: snap back to original
+        const or = piece.getData("origRow");
+        const oc = piece.getData("origCol");
+        const backX = this.offsetX + oc * this.tile + this.tile / 2;
+        const backY = this.offsetY + or * this.tile + this.tile / 2;
+        piece.x = backX;
+        piece.y = backY;
+        piece.setAlpha(1);
+        piece.setDepth(1);
+      }
+
+      // clear highlight and dragging state
+      this.clearHighlight();
+      this.draggingPiece = null;
     });
+
+    // pointermove should also update highlight if dragging
+    this.input.on("pointermove", (pointer) => {
+      if (this.draggingPiece) {
+        this.updateHighlightAt(pointer.x, pointer.y, this.draggingPiece);
+      }
+    });
+
+    // helper: highlight a square at screen x,y for given piece
+    this.updateHighlightAt = (x, y, piece) => {
+      // compute column/row
+      const col = Math.floor((x - this.offsetX) / this.tile);
+      const row = Math.floor((y - this.offsetY) / this.tile);
+      if (col < 0 || col >= this.cols || row < 0 || row >= this.rows) {
+        this.clearHighlight();
+        return;
+      }
+      // if same as last highlighted, do nothing
+      if (
+        this.lastHighlighted &&
+        this.lastHighlighted.col === col &&
+        this.lastHighlighted.row === row
+      ) {
+        return;
+      }
+      // clear previous
+      this.clearHighlight();
+      const valid = this.isValidMove(piece, { col, row });
+      const rect = this.squares[row][col];
+      if (rect) {
+        // set stroke: green for valid, red for invalid
+        const color = valid ? 0x00ff00 : 0xff0000;
+        rect.setStrokeStyle(4, color);
+        this.lastHighlighted = { col, row };
+      }
+    };
+
+    this.clearHighlight = () => {
+      if (this.lastHighlighted) {
+        const { col, row } = this.lastHighlighted;
+        const rect = this.squares[row] && this.squares[row][col];
+        if (rect) rect.setStrokeStyle(0);
+        this.lastHighlighted = null;
+      }
+    };
 
     // Add white king on e1 (column 4, bottom row 7)
     const kingCol = 4; // 0-indexed (a=0 ... h=7)
@@ -133,6 +378,11 @@ class ChessScene extends Phaser.Scene {
     king.setInteractive({ cursor: "pointer" });
     this.input.setDraggable(king);
     king.setData("isPiece", true);
+    king.setData("type", "king");
+    king.setData("color", "white");
+    king.setData("row", kingRow);
+    king.setData("col", kingCol);
+    this.board[kingRow][kingCol] = king;
 
     // Add white queen on d1 (column 3, bottom row 7)
     const queenCol = 3;
@@ -146,6 +396,11 @@ class ChessScene extends Phaser.Scene {
     queen.setInteractive({ cursor: "pointer" });
     this.input.setDraggable(queen);
     queen.setData("isPiece", true);
+    queen.setData("type", "queen");
+    queen.setData("color", "white");
+    queen.setData("row", queenRow);
+    queen.setData("col", queenCol);
+    this.board[queenRow][queenCol] = queen;
 
     // White back rank pieces (rooks, knights, bishops) - skip queen/king positions
     const whiteBackRow = 7;
@@ -172,6 +427,14 @@ class ChessScene extends Phaser.Scene {
       p.setInteractive({ cursor: "pointer" });
       this.input.setDraggable(p);
       p.setData("isPiece", true);
+      // derive type from key (white-rook -> rook)
+      const parts = key.split("-");
+      const type = parts.length > 1 ? parts[1] : parts[0];
+      p.setData("type", type);
+      p.setData("color", "white");
+      p.setData("row", whiteBackRow);
+      p.setData("col", c);
+      this.board[whiteBackRow][c] = p;
     }
 
     // --- Black pieces ---
@@ -187,6 +450,11 @@ class ChessScene extends Phaser.Scene {
       bp.setInteractive({ cursor: "pointer" });
       this.input.setDraggable(bp);
       bp.setData("isPiece", true);
+      bp.setData("type", "pawn");
+      bp.setData("color", "black");
+      bp.setData("row", blackPawnRow);
+      bp.setData("col", c);
+      this.board[blackPawnRow][c] = bp;
     }
 
     // Black back rank on row 0
@@ -212,6 +480,13 @@ class ChessScene extends Phaser.Scene {
       p.setInteractive({ cursor: "pointer" });
       this.input.setDraggable(p);
       p.setData("isPiece", true);
+      const parts = key.split("-");
+      const type = parts.length > 1 ? parts[1] : parts[0];
+      p.setData("type", type);
+      p.setData("color", "black");
+      p.setData("row", backRow);
+      p.setData("col", c);
+      this.board[backRow][c] = p;
     }
   }
 }
