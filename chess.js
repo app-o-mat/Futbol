@@ -11,6 +11,22 @@ const dark = 0xb58863;
 class ChessScene extends Phaser.Scene {
   constructor() {
     super({ key: "ChessScene" });
+    // which side to move: 'white' starts
+    this.turn = "white";
+  }
+
+  // Enable draggable only for pieces that belong to the side to move
+  updateDraggables() {
+    this.children.list.forEach((child) => {
+      if (!child.getData || !child.getData("isPiece")) return;
+      const allowed = child.getData("color") === this.turn;
+      try {
+        this.input.setDraggable(child, allowed);
+      } catch (e) {
+        if (!allowed) this.input.setDraggable(child, false);
+      }
+      child.setInteractive({ cursor: allowed ? "pointer" : "default" });
+    });
   }
 
   // Validate a proposed move: (piece, {col, row}) -> boolean
@@ -212,6 +228,13 @@ class ChessScene extends Phaser.Scene {
     // Drag handlers: allow dragging pawns and snapping them to the nearest square
     this.input.on("dragstart", (pointer, gameObject) => {
       if (!gameObject.getData || !gameObject.getData("isPiece")) return;
+
+      // if the object isn't draggable (set by updateDraggables), cancel
+      if (!gameObject.input || !gameObject.input.draggable) {
+        gameObject.setAlpha(1);
+        gameObject.setDepth(1);
+        return;
+      }
       gameObject.setDepth(2);
       gameObject.setAlpha(0.4);
       // mark currently dragging piece for hover checks
@@ -303,6 +326,10 @@ class ChessScene extends Phaser.Scene {
 
         gameObject.setDepth(1);
         gameObject.setAlpha(1);
+        // toggle turn after a successful move
+        this.turn = this.turn === "white" ? "black" : "white";
+        // enable/disable draggables for the new turn
+        this.updateDraggables();
       } else {
         // invalid move: snap back to original
         const or = piece.getData("origRow");
@@ -488,6 +515,8 @@ class ChessScene extends Phaser.Scene {
       p.setData("col", c);
       this.board[backRow][c] = p;
     }
+    // after creating all pieces, enable draggables for the starting side
+    this.updateDraggables();
   }
 }
 
