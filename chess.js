@@ -20,6 +20,10 @@ class ChessScene extends Phaser.Scene {
     this.load.image("king", "/assets/chess/white-king.jpeg");
     // Load the white queen image
     this.load.image("queen", "/assets/chess/white-queen.png");
+    // Load remaining white pieces
+    this.load.image("white-rook", "/assets/chess/white-rook.jpeg");
+    this.load.image("white-knight", "/assets/chess/white-knight.jpg");
+    this.load.image("white-bishop", "/assets/chess/white-bishop.jpeg");
     // Load black pieces
     this.load.image("black-pawn", "/assets/chess/black-pawn.png");
     this.load.image("black-rook", "/assets/chess/black-rook.png");
@@ -142,6 +146,33 @@ class ChessScene extends Phaser.Scene {
     queen.setInteractive({ cursor: "pointer" });
     this.input.setDraggable(queen);
     queen.setData("isPiece", true);
+
+    // White back rank pieces (rooks, knights, bishops) - skip queen/king positions
+    const whiteBackRow = 7;
+    const whiteOrder = [
+      "white-rook",
+      "white-knight",
+      "white-bishop",
+      null,
+      null,
+      "white-bishop",
+      "white-knight",
+      "white-rook",
+    ];
+
+    for (let c = 0; c < cols; c++) {
+      const key = whiteOrder[c];
+      if (!key) continue; // queen/king already placed
+      const x = this.offsetX + c * tile + tile / 2;
+      const y = this.offsetY + whiteBackRow * tile + tile / 2;
+      const p = this.add.image(x, y, key);
+      const s = (tile * 0.9) / Math.max(p.width, p.height);
+      p.setDisplaySize(p.width * s, p.height * s);
+      p.setDepth(1);
+      p.setInteractive({ cursor: "pointer" });
+      this.input.setDraggable(p);
+      p.setData("isPiece", true);
+    }
 
     // --- Black pieces ---
     // Black pawns on row 1
