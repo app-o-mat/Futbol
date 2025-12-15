@@ -168,6 +168,28 @@ class ChessScene extends Phaser.Scene {
       return true;
     }
 
+    // King movement: one square in any direction
+    if (type === "king") {
+      const row = piece.getData("row");
+      const col = piece.getData("col");
+      const tr = target.row;
+      const tc = target.col;
+
+      // can't stay in place
+      if (tr === row && tc === col) return false;
+
+      // must move exactly one square
+      const dRow = Math.abs(tr - row);
+      const dCol = Math.abs(tc - col);
+
+      // king can move one square horizontally, vertically, or diagonally
+      if (dRow <= 1 && dCol <= 1) {
+        return true;
+      }
+
+      return false;
+    }
+
     return true;
   }
 
