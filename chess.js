@@ -137,6 +137,37 @@ class ChessScene extends Phaser.Scene {
       return true;
     }
 
+    // Rook movement: horizontal or vertical any distance, no jumping
+    if (type === "rook") {
+      const row = piece.getData("row");
+      const col = piece.getData("col");
+      const tr = target.row;
+      const tc = target.col;
+
+      // can't stay in place
+      if (tr === row && tc === col) return false;
+
+      // must move only horizontally or only vertically
+      if (tr !== row && tc !== col) return false;
+
+      // determine direction
+      const dRow = tr - row;
+      const dCol = tc - col;
+      const stepRow = dRow === 0 ? 0 : dRow / Math.abs(dRow);
+      const stepCol = dCol === 0 ? 0 : dCol / Math.abs(dCol);
+
+      // walk from source towards target, ensure no blocking pieces
+      let r = row + stepRow;
+      let c = col + stepCol;
+      while (r !== tr || c !== tc) {
+        if (this.board[r] && this.board[r][c]) return false;
+        r += stepRow;
+        c += stepCol;
+      }
+
+      return true;
+    }
+
     return true;
   }
 
