@@ -222,6 +222,27 @@ class ChessScene extends Phaser.Scene {
       return true;
     }
 
+    // Knight movement: L-shape (2+1 or 1+2), can jump over pieces
+    if (type === 'knight') {
+      const row = piece.getData('row');
+      const col = piece.getData('col');
+      const tr = target.row;
+      const tc = target.col;
+
+      // can't stay in place
+      if (tr === row && tc === col) return false;
+
+      const dRow = Math.abs(tr - row);
+      const dCol = Math.abs(tc - col);
+
+      // must be an L-shape: (2,1) or (1,2)
+      if ((dRow === 2 && dCol === 1) || (dRow === 1 && dCol === 2)) {
+        return true;
+      }
+
+      return false;
+    }
+
     return true;
   }
 
