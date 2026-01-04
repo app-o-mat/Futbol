@@ -13,6 +13,15 @@ class ChessScene extends Phaser.Scene {
     super({ key: "ChessScene" });
     // which side to move: 'white' starts
     this.turn = "white";
+    // track if pieces have moved (for castling)
+    this.hasMoved = {
+      whiteKing: false,
+      blackKing: false,
+      whiteRookLeft: false,
+      whiteRookRight: false,
+      blackRookLeft: false,
+      blackRookRight: false
+    };
   }
 
   // Enable draggable only for pieces that belong to the side to move
@@ -27,6 +36,84 @@ class ChessScene extends Phaser.Scene {
       }
       child.setInteractive({ cursor: allowed ? "pointer" : "default" });
     });
+  }
+
+  // Check if a move is a castling attempt
+  isCastlingMove(piece, target) {
+    if (piece.getData('type') !== 'king') return false;
+    const row = piece.getData('row');
+    const col = piece.getData('col');
+    const tr = target.row;
+    const tc = target.col;
+    
+    // King must be on same row and moving exactly 2 squares horizontally
+    if (tr !== row || Math.abs(tc - col) !== 2) return false;
+    
+    const color = piece.getData('color');
+    const isKingside = tc > col; // moving right
+    
+    // Check if king has moved
+    const kingKey = color === 'white' ? 'whiteKing' : 'blackKing';
+    if (this.hasMoved[kingKey]) return false;
+    
+    // Check if corresponding rook has moved
+    const rookKey = color === 'white' 
+      ? (isKingside ? 'whiteRookRight' : 'whiteRookLeft')
+      : (isKingside ? 'blackRookRight' : 'blackRookLeft');
+    if (this.hasMoved[rookKey]) return false;
+    
+    // Check if path is clear between king and rook
+    const rookCol = isKingside ? 7 : 0;
+    const start = Math.min(col, rookCol) + 1;
+    const end = Math.max(col, rookCol);
+    for (let c = start; c < end; c++) {
+      if (this.board[row][c] !== null) return false;
+    }
+    
+    // Check if king is in check, passes through check, or ends in check
+    // (simplified: just check no pieces attacking the squares)
+    // For now, we'll allow it if path is clear
+    
+    return true;
+  }
+
+  // Check if a move is a castling attempt
+  isCastlingMove(piece, target) {
+    if (piece.getData('type') !== 'king') return false;
+    const row = piece.getData('row');
+    const col = piece.getData('col');
+    const tr = target.row;
+    const tc = target.col;
+    
+    // King must be on same row and moving exactly 2 squares horizontally
+    if (tr !== row || Math.abs(tc - col) !== 2) return false;
+    
+    const color = piece.getData('color');
+    const isKingside = tc > col; // moving right
+    
+    // Check if king has moved
+    const kingKey = color === 'white' ? 'whiteKing' : 'blackKing';
+    if (this.hasMoved[kingKey]) return false;
+    
+    // Check if corresponding rook has moved
+    const rookKey = color === 'white' 
+      ? (isKingside ? 'whiteRookRight' : 'whiteRookLeft')
+      : (isKingside ? 'blackRookRight' : 'blackRookLeft');
+    if (this.hasMoved[rookKey]) return false;
+    
+    // Check if path is clear between king and rook
+    const rookCol = isKingside ? 7 : 0;
+    const start = Math.min(col, rookCol) + 1;
+    const end = Math.max(col, rookCol);
+    for (let c = start; c < end; c++) {
+      if (this.board[row][c] !== null) return false;
+    }
+    
+    // Check if king is in check, passes through check, or ends in check
+    // (simplified: just check no pieces attacking the squares)
+    // For now, we'll allow it if path is clear
+    
+    return true;
   }
 
   // Validate a proposed move: (piece, {col, row}) -> boolean
@@ -168,7 +255,7 @@ class ChessScene extends Phaser.Scene {
       return true;
     }
 
-    // King movement: one square in any direction
+    // King movement: one square in any direction OR castling
     if (type === "king") {
       const row = piece.getData("row");
       const col = piece.getData("col");
@@ -181,6 +268,11 @@ class ChessScene extends Phaser.Scene {
       // must move exactly one square
       const dRow = Math.abs(tr - row);
       const dCol = Math.abs(tc - col);
+
+      // Check for castling (2 squares horizontally)
+      if (dRow === 0 && dCol === 2) {
+        return this.isCastlingMove(piece, target);
+      }
 
       // king can move one square horizontally, vertically, or diagonally
       if (dRow <= 1 && dCol <= 1) {
@@ -384,6 +476,9 @@ class ChessScene extends Phaser.Scene {
 
       // validate move
       if (this.isValidMove(piece, { row, col })) {
+        // Check if this is a castling move
+        const isCastling = this.isCastlingMove(piece, { row, col });
+        
         // handle captures
         const targetPiece = this.board[row][col];
         // en passant capture: diagonal move into empty square
@@ -412,6 +507,28 @@ class ChessScene extends Phaser.Scene {
           this.board[row][col] = null;
         }
 
+        // Execute castling: move the rook
+        if (isCastling) {
+          const isKingside = col > oldCol;
+          const rookOldCol = isKingside ? 7 : 0;
+          const rookNewCol = isKingside ? col - 1 : col + 1;
+          const rook = this.board[row][rookOldCol];
+          
+          if (rook) {
+            // move rook on board
+            this.board[row][rookOldCol] = null;
+            this.board[row][rookNewCol] = rook;
+            
+            // update rook position and metadata
+            const rookX = this.offsetX + rookNewCol * this.tile + this.tile / 2;
+            const rookY = this.offsetY + row * this.tile + this.tile / 2;
+            rook.x = rookX;
+            rook.y = rookY;
+            rook.setData('row', row);
+            rook.setData('col', rookNewCol);
+          }
+        }
+
         // update board occupancy
         this.board[oldRow][oldCol] = null;
         this.board[row][col] = piece;
@@ -421,6 +538,22 @@ class ChessScene extends Phaser.Scene {
         piece.y = snapY;
         piece.setData("row", row);
         piece.setData("col", col);
+        
+        // Track piece movements for castling
+        const pieceType = piece.getData('type');
+        const color = piece.getData('color');
+        if (pieceType === 'king') {
+          this.hasMoved[color === 'white' ? 'whiteKing' : 'blackKing'] = true;
+        } else if (pieceType === 'rook') {
+          // Determine which rook moved based on starting position
+          if (color === 'white') {
+            if (oldCol === 0) this.hasMoved.whiteRookLeft = true;
+            else if (oldCol === 7) this.hasMoved.whiteRookRight = true;
+          } else {
+            if (oldCol === 0) this.hasMoved.blackRookLeft = true;
+            else if (oldCol === 7) this.hasMoved.blackRookRight = true;
+          }
+        }
 
         // track last double pawn move (for en passant)
         if (piece.getData("type") === "pawn" && Math.abs(row - oldRow) === 2) {
@@ -482,8 +615,12 @@ class ChessScene extends Phaser.Scene {
       const valid = this.isValidMove(piece, { col, row });
       const rect = this.squares[row][col];
       if (rect) {
-        // set stroke: green for valid, red for invalid
-        const color = valid ? 0x00ff00 : 0xff0000;
+        // set stroke: purple for castling, green for valid, red for invalid
+        let color = 0xff0000; // red for invalid
+        if (valid) {
+          const isCastling = this.isCastlingMove(piece, { col, row });
+          color = isCastling ? 0x9966ff : 0x00ff00; // purple for castling, green for normal
+        }
         rect.setStrokeStyle(4, color);
         this.lastHighlighted = { col, row };
       }
