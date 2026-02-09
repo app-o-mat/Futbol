@@ -36,9 +36,15 @@ class BBGame extends Phaser.Scene {
 
   loadSprites() {
     this.load.image("basketball", "/assets/basketball/basketball.png");
+    this.load.image("hoop", "/assets/basketball/BasketBall hoop.png");
+    this.load.image("court", "/assets/basketball/BasketBall court.png");
   }
 
   placeSprites() {
+    // Add court background first (centered)
+    this.courtSprite = this.add.image(gameWidth / 2, gameHeight / 2, "court");
+    this.courtSprite.setOrigin(0.5, 0.5);
+
     this.basketball = this.add.sprite(gameWidth / 2, gameHeight / 2, "basketball");
     this.basketball.carriedBy = null;
     this.basketball.shotBy = null;
@@ -47,17 +53,28 @@ class BBGame extends Phaser.Scene {
     this.player1.setBall(this.basketball);
 
     this.player2.placeSprite(this, (3 * gameWidth) / 4, gameHeight / 2);
+    this.player2.gameObject.angle = 180;
     this.player2.setBall(this.basketball);
 
     this.leftHoop = this.add.rectangle(16, gameHeight / 2, 32, 96, 0x808080);
     this.rightHoop = this.add.rectangle(gameWidth - 16, gameHeight / 2, 32, 96, 0x808080);
+
+    // Place hoop image centered on the left gray hoop rectangle
+    this.leftHoopSprite = this.add.image(this.leftHoop.x, this.leftHoop.y, "hoop");
+    this.leftHoopSprite.setOrigin(0.5, 0.5);
+
+    // Place and rotate hoop image centered on the right gray hoop rectangle
+    this.rightHoopSprite = this.add.image(this.rightHoop.x, this.rightHoop.y, "hoop");
+    this.rightHoopSprite.setOrigin(0.5, 0.5);
+    this.rightHoopSprite.setAngle(180);
   }
 
   setUpPhysics() {
     this.physics.world.enable(this.basketball);
     this.basketball.body.setCollideWorldBounds(true);
     this.basketball.body.setMass(5);
-    this.basketball.body.setBounce(0.3);
+    this.basketball.body.setBounce(0.1);
+    this.basketball.body.setDrag(0.02);
 
     this.player1.setupPhysics(this);
     this.player2.setupPhysics(this);
@@ -65,35 +82,73 @@ class BBGame extends Phaser.Scene {
     this.physics.add.collider(this.player1.gameObject, this.basketball, this.playerTouchBall, null, this);
     this.physics.add.collider(this.player2.gameObject, this.basketball, this.playerTouchBall, null, this);
 
-    this.physics.add.overlap(this.basketball, this.leftHoop, this.goalDetectedPlayer2, null, this);
-    this.physics.add.overlap(this.basketball, this.rightHoop, this.goalDetectedPlayer1, null, this);
+    // Enable physics on hoop sprites and use them for goal detection
+    if (this.leftHoopSprite) {
+      this.physics.world.enable(this.leftHoopSprite);
+      this.leftHoopSprite.body.immovable = true;
+      this.leftHoopSprite.body.moves = false;
+      this.physics.add.overlap(this.basketball, this.leftHoopSprite, this.goalDetectedPlayer2, null, this);
+    }
+
+    if (this.rightHoopSprite) {
+      this.physics.world.enable(this.rightHoopSprite);
+      this.rightHoopSprite.body.immovable = true;
+      this.rightHoopSprite.body.moves = false;
+      this.physics.add.overlap(this.basketball, this.rightHoopSprite, this.goalDetectedPlayer1, null, this);
+    }
   }
 
   goalDetectedPlayer1() {
-    if (this.basketball.shotBy === "player2") {
-      this.player2Score = this.player2Score + 2;
-    } else {
-      this.player1Score = this.player1Score + 1;
-    }
+    console.log("Goal detected! Player 1 (Red) scored!");
+    this.player1Score = this.player1Score + 2;
     this.resetBall();
   }
 
   goalDetectedPlayer2() {
-    if (this.basketball.shotBy === "player1") {
-      this.player1Score = this.player1Score + 2;
-    } else {
-      this.player2Score = this.player2Score + 1;
-    }
+    console.log("Goal detected! Player 2 (Blue) scored!");
+    this.player2Score = this.player2Score + 2;
     this.resetBall();
   }
 
   resetBall() {
-    this.basketball.body.velocity.x = 0;
-    this.basketball.body.velocity.y = 0;
-    this.basketball.x = gameWidth / 2;
-    this.basketball.y = gameHeight / 2;
-    this.basketball.carriedBy = null;
-    this.basketball.shotBy = null;
+    // If Arcade Body.reset is available use it to immediately set position and zero velocity
+    if (this.basketball && this.basketball.body && typeof this.basketball.body.reset === 'function') {
+      this.basketball.body.reset(gameWidth / 2, gameHeight / 2);
+    } else {
+      if (this.basketball) {
+        this.basketball.x = gameWidth / 2;
+        this.basketball.y = gameHeight / 2;
+        if (this.basketball.body) {
+          this.basketball.body.velocity.x = 0;
+          this.basketball.body.velocity.y = 0;
+        }
+      }
+    }
+    if (this.basketball) {
+      this.basketball.carriedBy = null;
+      this.basketball.shotBy = null;
+    }
+
+    // Reset players to their starting positions and stop movement
+    if (this.player1 && this.player1.gameObject) {
+      this.player1.gameObject.x = gameWidth / 4;
+      this.player1.gameObject.y = gameHeight / 2;
+      if (this.player1.gameObject.body) {
+        this.player1.gameObject.body.velocity.x = 0;
+        this.player1.gameObject.body.velocity.y = 0;
+      }
+      this.player1.gameObject.angle = 0;
+    }
+
+    if (this.player2 && this.player2.gameObject) {
+      this.player2.gameObject.x = (3 * gameWidth) / 4;
+      this.player2.gameObject.y = gameHeight / 2;
+      if (this.player2.gameObject.body) {
+        this.player2.gameObject.body.velocity.x = 0;
+        this.player2.gameObject.body.velocity.y = 0;
+      }
+      this.player2.gameObject.angle = 180;
+    }
   }
 
   renderScore() {
@@ -141,6 +196,9 @@ class BBGame extends Phaser.Scene {
     var w = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
     var s = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
     this.player1.moveBasedOnKeys(a, d, w, s);
+    // shoot controls for player1 (space key)
+    var spaceKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+    spaceKey.on("down", this.player1.shootBall, this.player1);
 
     // Right player controls (Arrow Keys)
     var left = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.LEFT);
