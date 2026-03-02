@@ -12,10 +12,31 @@ export class BBPlayer {
     this.isMovingBackward = false;
     this.isRotatingLeft = false;
     this.isRotatingRight = false;
+    
+    this.spriteSheetKey = undefined;
+    this.animationKey = undefined;
   }
 
   setBall(ball) {
     this.ball = ball;
+  }
+
+  load(scene) {
+    scene.load.spritesheet(this.spriteSheetKey, `/assets/basketball/${this.spriteSheetKey}.png`, {
+      frameWidth: 32,
+      frameHeight: 32,
+    });
+  }
+
+  setupAnimations(scene) {
+    if (this.animationKey && this.spriteSheetKey) {
+      scene.anims.create({
+        key: this.animationKey,
+        frames: scene.anims.generateFrameNumbers(this.spriteSheetKey, { start: 0, end: 3 }),
+        frameRate: 8,
+        repeat: -1,
+      });
+    }
   }
 
   update() {
@@ -23,6 +44,19 @@ export class BBPlayer {
       this.gameObject.angle = this.gameObject.angle - 1.2;
     } else if (this.isRotatingRight) {
       this.gameObject.angle = this.gameObject.angle + 1.2;
+    }
+
+    if (this.isMovingForward || this.isMovingBackward) {
+      // Play running animation
+      if (this.animationKey && !this.gameObject.anims.isPlaying) {
+        this.gameObject.play(this.animationKey, true);
+      }
+    } else {
+      // Stop animation and show frame 1 (second frame)
+      if (this.gameObject.anims.isPlaying) {
+        this.gameObject.stop();
+      }
+      this.gameObject.setFrame(1);
     }
 
     if (this.isMovingForward) {
@@ -48,7 +82,8 @@ export class BBPlayer {
   }
 
   placeSprite(scene, x, y) {
-    this.gameObject = scene.add.rectangle(x, y, 32, 32, this.color);
+    this.gameObject = scene.add.sprite(x, y, this.spriteSheetKey);
+    this.gameObject.setFrame(1);
   }
 
   startRotatingLeft() {

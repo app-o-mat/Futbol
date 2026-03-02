@@ -9,7 +9,12 @@ class BBGame extends Phaser.Scene {
   constructor() {
     super();
     this.player1 = new BBPlayer("player1", 0xff0000); // Red player
+    this.player1.spriteSheetKey = "bbplayer-01-anim";
+    this.player1.animationKey = "player1Running";
+    
     this.player2 = new BBPlayer("player2", 0x0000ff); // Blue player
+    this.player2.spriteSheetKey = "bbplayer-02-anim";
+    this.player2.animationKey = "player2Running";
 
     this.basketball = undefined;
     this.leftHoop = undefined;
@@ -38,6 +43,9 @@ class BBGame extends Phaser.Scene {
     this.load.image("basketball", "/assets/basketball/basketball.png");
     this.load.image("hoop", "/assets/basketball/BasketBall hoop.png");
     this.load.image("court", "/assets/basketball/BasketBall court.png");
+    
+    this.player1.load(this);
+    this.player2.load(this);
   }
 
   placeSprites() {
@@ -78,6 +86,10 @@ class BBGame extends Phaser.Scene {
 
     this.player1.setupPhysics(this);
     this.player2.setupPhysics(this);
+    
+    // Setup animations for players
+    this.player1.setupAnimations(this);
+    this.player2.setupAnimations(this);
 
     this.physics.add.collider(this.player1.gameObject, this.basketball, this.playerTouchBall, null, this);
     this.physics.add.collider(this.player2.gameObject, this.basketball, this.playerTouchBall, null, this);
@@ -138,6 +150,10 @@ class BBGame extends Phaser.Scene {
         this.player1.gameObject.body.velocity.y = 0;
       }
       this.player1.gameObject.angle = 0;
+      if (this.player1.gameObject.anims.isPlaying) {
+        this.player1.gameObject.stop();
+      }
+      this.player1.gameObject.setFrame(1);
     }
 
     if (this.player2 && this.player2.gameObject) {
@@ -148,6 +164,10 @@ class BBGame extends Phaser.Scene {
         this.player2.gameObject.body.velocity.y = 0;
       }
       this.player2.gameObject.angle = 180;
+      if (this.player2.gameObject.anims.isPlaying) {
+        this.player2.gameObject.stop();
+      }
+      this.player2.gameObject.setFrame(1);
     }
   }
 
