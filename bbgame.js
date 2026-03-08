@@ -49,6 +49,16 @@ class BBGame extends Phaser.Scene {
     this.player2.load(this);
   }
 
+  drawMidCourtLine() {
+    // vertical center line across the court
+    const graphics = this.add.graphics();
+    graphics.lineStyle(2, 0xffffff);
+    graphics.beginPath();
+    graphics.moveTo(gameWidth/2, 0);
+    graphics.lineTo(gameWidth/2, gameHeight);
+    graphics.strokePath();
+  }
+
   drawThreePointArc(isLeft) {
     // draw half-ellipse as a three-point arc
     const graphics = this.add.graphics();
@@ -132,6 +142,8 @@ class BBGame extends Phaser.Scene {
     this.courtSprite = this.add.image(gameWidth / 2, gameHeight / 2, "court");
     this.courtSprite.setOrigin(0.5, 0.5);
 
+    // court markings
+    this.drawMidCourtLine();
     this.drawThreePointArc(true);
     this.drawThreePointArc(false);
     this.drawFoulBox(true);
