@@ -2,8 +2,9 @@
 import { BBPlayer } from "./bbplayer.js";
 
 var game = undefined;
-var gameWidth = 17 * 32;
-var gameHeight = 12 * 32;
+// original field size was defined in tiles, but court is 500x300
+var gameWidth = 500;
+var gameHeight = 300;
 
 class BBGame extends Phaser.Scene {
   constructor() {
@@ -48,10 +49,40 @@ class BBGame extends Phaser.Scene {
     this.player2.load(this);
   }
 
+  drawThreePointArc(isLeft) {
+    // draw half-ellipse as a three-point arc
+    const graphics = this.add.graphics();
+    graphics.lineStyle(2, 0xffffff);
+   
+    const centerY = gameHeight / 2;
+    const ellipseHeight = gameHeight/2 - 20;
+    const ellipseWidth = 190;
+    const centerX = isLeft ? 0 : gameWidth;
+    const tStart = isLeft ? -Math.PI/2 : Math.PI/2;
+    const tEnd = isLeft ? Math.PI/2 : 3*Math.PI/2;
+    // manually construct half-ellipse path
+    graphics.beginPath();
+    let first = true;
+    for (let t = tStart; t <= tEnd; t += 0.01) {
+      const x = centerX + ellipseWidth * Math.cos(t);
+      const y = centerY + ellipseHeight * Math.sin(t);
+      if (first) {
+        graphics.moveTo(x, y);
+        first = false;
+      } else {
+        graphics.lineTo(x, y);
+      }
+    }
+    graphics.strokePath();
+  }
+
   placeSprites() {
     // Add court background first (centered)
     this.courtSprite = this.add.image(gameWidth / 2, gameHeight / 2, "court");
     this.courtSprite.setOrigin(0.5, 0.5);
+
+    this.drawThreePointArc(true);
+    this.drawThreePointArc(false);
 
     this.basketball = this.add.sprite(gameWidth / 2, gameHeight / 2, "basketball");
     this.basketball.carriedBy = null;
