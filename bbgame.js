@@ -76,6 +76,57 @@ class BBGame extends Phaser.Scene {
     graphics.strokePath();
   }
 
+  drawFoulBox(isLeft) {
+    // draw the rectangular "foul box" (the key) on either half of the court
+    const graphics = this.add.graphics();
+    graphics.lineStyle(2, 0xffffff);
+
+    const boxWidth = 110;
+    const boxHeight = 110;
+    const y = (gameHeight - boxHeight) / 2;
+    const radius = boxWidth / 2;
+
+    if (isLeft) {
+      // left side box flush with left edge
+      graphics.strokeRect(0, y, boxWidth, boxHeight);
+      // semi-circle opening toward right
+      const centerX = boxWidth;
+      const centerY = gameHeight / 2;
+      graphics.beginPath();
+      let first = true;
+      for (let t = -Math.PI / 2; t <= Math.PI / 2; t += 0.01) {
+        const x = centerX + radius * Math.cos(t);
+        const yPos = centerY + radius * Math.sin(t);
+        if (first) {
+          graphics.moveTo(x, yPos);
+          first = false;
+        } else {
+          graphics.lineTo(x, yPos);
+        }
+      }
+      graphics.strokePath();
+    } else {
+      // right side box flush with right edge
+      graphics.strokeRect(gameWidth - boxWidth, y, boxWidth, boxHeight);
+      // semi-circle opening toward left
+      const centerX = gameWidth - boxWidth;
+      const centerY = gameHeight / 2;
+      graphics.beginPath();
+      let first = true;
+      for (let t = Math.PI / 2; t <= 3 * Math.PI / 2; t += 0.01) {
+        const x = centerX + radius * Math.cos(t);
+        const yPos = centerY + radius * Math.sin(t);
+        if (first) {
+          graphics.moveTo(x, yPos);
+          first = false;
+        } else {
+          graphics.lineTo(x, yPos);
+        }
+      }
+      graphics.strokePath();
+    }
+  }
+
   placeSprites() {
     // Add court background first (centered)
     this.courtSprite = this.add.image(gameWidth / 2, gameHeight / 2, "court");
@@ -83,6 +134,8 @@ class BBGame extends Phaser.Scene {
 
     this.drawThreePointArc(true);
     this.drawThreePointArc(false);
+    this.drawFoulBox(true);
+    this.drawFoulBox(false);
 
     this.basketball = this.add.sprite(gameWidth / 2, gameHeight / 2, "basketball");
     this.basketball.carriedBy = null;
