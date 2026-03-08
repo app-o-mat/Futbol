@@ -134,6 +134,10 @@ export class BBPlayer {
 
   shootBall() {
     if (this.ball !== undefined && this.ball.carriedBy === this.gameObject) {
+      // record the position from which the shot is taken
+      this.ball.lastShotX = this.gameObject.x;
+      this.ball.lastShotY = this.gameObject.y;
+
       this.ball.body.velocity.x = this.shootVelocity * Math.cos(this.gameObject.rotation);
       this.ball.body.velocity.y = this.shootVelocity * Math.sin(this.gameObject.rotation);
       this.ball.carriedBy = null;

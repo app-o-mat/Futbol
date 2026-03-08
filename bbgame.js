@@ -194,15 +194,42 @@ class BBGame extends Phaser.Scene {
     }
   }
 
+  // determine whether a shot taken from (x,y) would be outside the three-point arc
+  isShotOutsideThree(x, y, isLeft) {
+    if (x === undefined || y === undefined) {
+      return false;
+    }
+    const centerX = isLeft ? 0 : gameWidth;
+    const centerY = gameHeight / 2;
+    const ellipseWidth = 190;
+    const ellipseHeight = gameHeight / 2 - 20;
+    // normalized coordinates relative to ellipse center
+    const dx = x - centerX;
+    const dy = y - centerY;
+    const value = (dx * dx) / (ellipseWidth * ellipseWidth) + (dy * dy) / (ellipseHeight * ellipseHeight);
+    // outside if value > 1
+    return value > 1;
+  }
+
   goalDetectedPlayer1() {
+    // player1 scored on right hoop
     console.log("Goal detected! Player 1 (Red) scored!");
-    this.player1Score = this.player1Score + 2;
+    let points = 2;
+    if (this.basketball && this.isShotOutsideThree(this.basketball.lastShotX, this.basketball.lastShotY, false)) {
+      points = 3;
+    }
+    this.player1Score += points;
     this.resetBall();
   }
 
   goalDetectedPlayer2() {
+    // player2 scored on left hoop
     console.log("Goal detected! Player 2 (Blue) scored!");
-    this.player2Score = this.player2Score + 2;
+    let points = 2;
+    if (this.basketball && this.isShotOutsideThree(this.basketball.lastShotX, this.basketball.lastShotY, true)) {
+      points = 3;
+    }
+    this.player2Score += points;
     this.resetBall();
   }
 
@@ -223,6 +250,8 @@ class BBGame extends Phaser.Scene {
     if (this.basketball) {
       this.basketball.carriedBy = null;
       this.basketball.shotBy = null;
+      this.basketball.lastShotX = undefined;
+      this.basketball.lastShotY = undefined;
     }
 
     // Reset players to their starting positions and stop movement
