@@ -24,6 +24,7 @@ class BBGame extends Phaser.Scene {
     this.scoreText = undefined;
     this.leftScoreText = undefined;
     this.rightScoreText = undefined;
+    this.ballTween = undefined;
     this.player1Score = 0;
     this.player2Score = 0;
   }
@@ -158,6 +159,7 @@ class BBGame extends Phaser.Scene {
     this.basketball = this.add.sprite(gameWidth / 2, gameHeight / 2, "basketball");
     this.basketball.carriedBy = null;
     this.basketball.shotBy = null;
+    this.basketball.setScale(1);
 
     this.player1.placeSprite(this, gameWidth / 4, gameHeight / 2);
     this.player1.setBall(this.basketball);
@@ -270,6 +272,7 @@ class BBGame extends Phaser.Scene {
       this.basketball.shotBy = null;
       this.basketball.lastShotX = undefined;
       this.basketball.lastShotY = undefined;
+      this.basketball.setScale(1);
     }
 
     // Reset players to their starting positions and stop movement
@@ -350,6 +353,25 @@ class BBGame extends Phaser.Scene {
       this.basketball.y = this.basketball.carriedBy.y + offsetDistance * Math.sin(this.basketball.carriedBy.rotation);
       this.basketball.body.velocity.x = this.basketball.carriedBy.body.velocity.x;
       this.basketball.body.velocity.y = this.basketball.carriedBy.body.velocity.y;
+
+      // Start dribbling animation if not already running
+      if (this.ballTween === undefined) {
+        this.ballTween = this.tweens.add({
+          targets: this.basketball,
+          scale: 0.9,
+          duration: 200,
+          yoyo: true,
+          repeat: -1,
+          ease: 'Sine.easeInOut'
+        });
+      }
+    } else {
+      // Stop dribbling animation if running
+      if (this.ballTween !== undefined) {
+        this.ballTween.stop();
+        this.ballTween = undefined;
+        this.basketball.setScale(1);
+      }
     }
     
     this.player1.update();
