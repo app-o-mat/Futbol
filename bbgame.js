@@ -22,6 +22,8 @@ class BBGame extends Phaser.Scene {
     this.rightHoop = undefined;
 
     this.scoreText = undefined;
+    this.leftScoreText = undefined;
+    this.rightScoreText = undefined;
     this.player1Score = 0;
     this.player2Score = 0;
   }
@@ -44,6 +46,7 @@ class BBGame extends Phaser.Scene {
     this.load.image("basketball", "/assets/basketball/basketball.png");
     this.load.image("hoop", "/assets/basketball/BasketBall hoop.png");
     this.load.image("court", "/assets/basketball/BasketBall court.png");
+    this.load.image("scoreboard", "/assets/basketball/scoreboard.png");
     
     this.player1.load(this);
     this.player2.load(this);
@@ -141,6 +144,9 @@ class BBGame extends Phaser.Scene {
     // Add court background first (centered)
     this.courtSprite = this.add.image(gameWidth / 2, gameHeight / 2, "court");
     this.courtSprite.setOrigin(0.5, 0.5);
+
+    this.scoreboard = this.add.sprite(gameWidth / 2, 32, "scoreboard");
+    this.scoreboard.setScale(2);
 
     // court markings
     this.drawMidCourtLine();
@@ -297,20 +303,36 @@ class BBGame extends Phaser.Scene {
   }
 
   renderScore() {
-    if (this.scoreText !== undefined) {
-      this.scoreText.destroy();
+    if (this.leftScoreText !== undefined) {
+      this.leftScoreText.destroy();
+    }
+    if (this.rightScoreText !== undefined) {
+      this.rightScoreText.destroy();
     }
 
-    this.scoreText = this.add.text(
-      gameWidth / 2,
-      16,
-      `${this.player1Score} - ${this.player2Score}`,
+    this.leftScoreText = this.add.text(
+      gameWidth / 2 - 25,
+      32,
+      `${this.player1Score}`,
       {
         fontFamily: "helvetica",
-        fontSize: "24px",
+        fontSize: "13px",
+        color: "#ffffff",
       },
     );
-    this.scoreText.setOrigin(0.5, 0);
+    this.leftScoreText.setOrigin(0.5, 0.5);
+
+    this.rightScoreText = this.add.text(
+      gameWidth / 2 + 25,
+      32,
+      `${this.player2Score}`,
+      {
+        fontFamily: "helvetica",
+        fontSize: "13px",
+        color: "#ffffff",
+      },
+    );
+    this.rightScoreText.setOrigin(0.5, 0.5);
   }
 
   playerTouchBall(player, ball) {
