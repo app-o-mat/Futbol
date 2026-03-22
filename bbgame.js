@@ -25,6 +25,7 @@ class BBGame extends Phaser.Scene {
     this.leftScoreText = undefined;
     this.rightScoreText = undefined;
     this.ballTween = undefined;
+    this.isSinglePlayer = true;
     this.player1Score = 0;
     this.player2Score = 0;
   }
@@ -147,7 +148,6 @@ class BBGame extends Phaser.Scene {
     this.courtSprite.setOrigin(0.5, 0.5);
 
     this.scoreboard = this.add.sprite(gameWidth / 2, 32, "scoreboard");
-    this.scoreboard.setScale(2);
 
     // court markings
     this.drawMidCourtLine();
@@ -298,6 +298,10 @@ class BBGame extends Phaser.Scene {
         this.player2.gameObject.body.velocity.y = 0;
       }
       this.player2.gameObject.angle = 180;
+      this.player2.isMovingForward = false;
+      this.player2.isMovingBackward = false;
+      this.player2.isRotatingLeft = false;
+      this.player2.isRotatingRight = false;
       if (this.player2.gameObject.anims.isPlaying) {
         this.player2.gameObject.stop();
       }
@@ -344,6 +348,9 @@ class BBGame extends Phaser.Scene {
 
   update() {
     this.movePlayersBasedOnKeys();
+    if (this.isSinglePlayer) {
+      this.aiControlPlayer2();
+    }
     this.renderScore();
     
     // Update ball position if being carried
@@ -390,15 +397,54 @@ class BBGame extends Phaser.Scene {
     spaceKey.on("down", this.player1.shootBall, this.player1);
 
     // Right player controls (Arrow Keys)
-    var left = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.LEFT);
-    var right = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.RIGHT);
-    var up = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.UP);
-    var down = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.DOWN);
-    this.player2.moveBasedOnKeys(left, right, up, down);
+    if (!this.isSinglePlayer) {
+      var left = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.LEFT);
+      var right = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.RIGHT);
+      var up = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.UP);
+      var down = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.DOWN);
+      this.player2.moveBasedOnKeys(left, right, up, down);
 
-    // Shoot controls for player2 (0 key)
-    var zeroKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ZERO);
-    zeroKey.on("down", this.player2.shootBall, this.player2);
+      // Shoot controls for player2 (0 key)
+      var zeroKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ZERO);
+      zeroKey.on("down", this.player2.shootBall, this.player2);
+    }
+  }
+
+  aiControlPlayer2() {
+    if (!this.player2.gameObject || !this.player2.gameObject.body) return;
+
+    this.player2.gameObject.body.immovable = false;
+    this.player2.gameObject.body.moves = true;
+
+    let targetX, targetY;
+    if (this.basketball.carriedBy === this.player2) {
+      // Carrying the ball, move towards left hoop
+      targetX = 16;
+      targetY = gameHeight / 2;
+    } else {
+      // Not carrying, move towards the ball
+      targetX = this.basketball.x;
+      targetY = this.basketball.y;
+    }
+
+    let dx = targetX - this.player2.gameObject.x;
+    let dy = targetY - this.player2.gameObject.y;
+    let dist = Math.sqrt(dx * dx + dy * dy);
+
+    if (dist > 0) {
+      this.player2.gameObject.angle = Math.atan2(dy, dx) * 180 / Math.PI;
+      this.player2.isMovingForward = true;
+    } else {
+      this.player2.isMovingForward = false;
+    }
+
+    // Shoot if carrying and close to hoop
+    if (this.basketball.carriedBy === this.player2) {
+      let distToHoop = Math.sqrt((16 - this.player2.gameObject.x) ** 2 + (gameHeight / 2 - this.player2.gameObject.y) ** 2);
+      if (distToHoop < 80) {
+        this.player2.shootBall();
+      }
+    }
   }
 }
 
