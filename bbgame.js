@@ -42,6 +42,10 @@ class BBGame extends Phaser.Scene {
   create() {
     this.placeSprites();
     this.setUpPhysics();
+
+    this.targetCircle = this.add.circle(0, 0, 10, 0xff0000);
+    this.targetCircle.setVisible(false);
+    this.angleText = this.add.text(10, 10, '', { fontSize: '16px', fill: '#ffffff' });
   }
 
   loadSprites() {
@@ -167,6 +171,7 @@ class BBGame extends Phaser.Scene {
     this.player2.placeSprite(this, (3 * gameWidth) / 4, gameHeight / 2);
     this.player2.gameObject.angle = 180;
     this.player2.setBall(this.basketball);
+    this.player2.speed = 50;
 
     this.leftHoop = this.add.rectangle(16, gameHeight / 2, 32, 96, 0x808080);
     this.rightHoop = this.add.rectangle(gameWidth - 16, gameHeight / 2, 32, 96, 0x808080);
@@ -184,7 +189,7 @@ class BBGame extends Phaser.Scene {
   setUpPhysics() {
     this.physics.world.enable(this.basketball);
     this.basketball.body.setCollideWorldBounds(true);
-    this.basketball.body.setMass(5);
+    this.basketball.body.setMass(1);
     this.basketball.body.setBounce(0.1);
     this.basketball.body.setDrag(0.02);
 
@@ -417,32 +422,97 @@ class BBGame extends Phaser.Scene {
     this.player2.gameObject.body.moves = true;
 
     let targetX, targetY;
-    if (this.basketball.carriedBy === this.player2) {
-      // Carrying the ball, move towards left hoop
-      targetX = 16;
-      targetY = gameHeight / 2;
+    if (this.basketball.carriedBy === this.player2.gameObject) {
+      // Carrying the ball, move towards shooting position
+      let b = gameHeight / 2 - 20;
+      targetY = gameHeight / 2 + (Math.random() - 0.5) * 80;
+      let ratio = (targetY - gameHeight / 2) / b;
+      let arcX = 190 * Math.sqrt(Math.max(0, 1 - ratio * ratio));
+      targetX = arcX + (Math.random() - 0.5) * 60;
+      // clamp to reasonable range
+      targetX = Math.max(50, Math.min(300, targetX));
+      targetY = Math.max(50, Math.min(gameHeight - 50, targetY));
     } else {
       // Not carrying, move towards the ball
       targetX = this.basketball.x;
       targetY = this.basketball.y;
     }
 
+    this.targetCircle.x = targetX;
+    this.targetCircle.y = targetY;
+    this.targetCircle.setVisible(true);
+
     let dx = targetX - this.player2.gameObject.x;
     let dy = targetY - this.player2.gameObject.y;
     let dist = Math.sqrt(dx * dx + dy * dy);
 
-    if (dist > 0) {
-      this.player2.gameObject.angle = Math.atan2(dy, dx) * 180 / Math.PI;
-      this.player2.isMovingForward = true;
+    if (this.basketball.carriedBy === this.player2.gameObject) {
+      if (dist < 20) {
+        // at shooting position, turn towards hoop
+        let shootAngle = Math.atan2( (gameHeight/2 - this.player2.gameObject.y), (16 - this.player2.gameObject.x) ) * 180 / Math.PI;
+        let currentAngle = this.player2.gameObject.angle;
+        let angleDiff = shootAngle - currentAngle;
+        angleDiff = ((angleDiff + 180) % 360) - 180;
+        if (Math.abs(angleDiff) < 10) {
+          this.player2.shootBall();
+        } else {
+          if (angleDiff > 0) {
+            this.player2.isRotatingRight = true;
+            this.player2.isRotatingLeft = false;
+          } else {
+            this.player2.isRotatingLeft = true;
+            this.player2.isRotatingRight = false;
+          }
+          this.player2.isMovingForward = false;
+        }
+      } else {
+        // move towards target
+        if (dist > 0) {
+          let desiredAngle = Math.atan2(dy, dx) * 180 / Math.PI;
+          this.angleText.setText(`Desired: ${desiredAngle.toFixed(2)}, Current: ${this.player2.gameObject.angle.toFixed(2)}`);
+          let currentAngle = this.player2.gameObject.angle;
+          let angleDiff = desiredAngle - currentAngle;
+          angleDiff = ((angleDiff + 180) % 360) - 180;
+          if (angleDiff > 5) {
+            this.player2.isRotatingRight = true;
+            this.player2.isRotatingLeft = false;
+          } else if (angleDiff < -5) {
+            this.player2.isRotatingLeft = true;
+            this.player2.isRotatingRight = false;
+          } else {
+            this.player2.isRotatingLeft = false;
+            this.player2.isRotatingRight = false;
+          }
+          this.player2.isMovingForward = true;
+        } else {
+          this.player2.isMovingForward = false;
+          this.player2.isRotatingLeft = false;
+          this.player2.isRotatingRight = false;
+        }
+      }
     } else {
-      this.player2.isMovingForward = false;
-    }
-
-    // Shoot if carrying and close to hoop
-    if (this.basketball.carriedBy === this.player2) {
-      let distToHoop = Math.sqrt((16 - this.player2.gameObject.x) ** 2 + (gameHeight / 2 - this.player2.gameObject.y) ** 2);
-      if (distToHoop < 80) {
-        this.player2.shootBall();
+      // not carrying, move towards ball
+      if (dist > 0) {
+        let desiredAngle = Math.atan2(dy, dx) * 180 / Math.PI;
+        this.angleText.setText(`Desired: ${desiredAngle.toFixed(2)}, Current: ${this.player2.gameObject.angle.toFixed(2)}`);
+        let currentAngle = this.player2.gameObject.angle;
+        let angleDiff = desiredAngle - currentAngle;
+        angleDiff = ((angleDiff + 180) % 360) - 180;
+        if (angleDiff > 5) {
+          this.player2.isRotatingRight = true;
+          this.player2.isRotatingLeft = false;
+        } else if (angleDiff < -5) {
+          this.player2.isRotatingLeft = true;
+          this.player2.isRotatingRight = false;
+        } else {
+          this.player2.isRotatingLeft = false;
+          this.player2.isRotatingRight = false;
+        }
+        this.player2.isMovingForward = true;
+      } else {
+        this.player2.isMovingForward = false;
+        this.player2.isRotatingLeft = false;
+        this.player2.isRotatingRight = false;
       }
     }
   }
