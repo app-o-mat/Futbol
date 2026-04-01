@@ -28,6 +28,9 @@ class BBGame extends Phaser.Scene {
     this.isSinglePlayer = true;
     this.player1Score = 0;
     this.player2Score = 0;
+
+    this.targetDebugColor = 0xff0000;
+    this.wooshSound = undefined;
   }
 
   preload() {
@@ -43,9 +46,13 @@ class BBGame extends Phaser.Scene {
     this.placeSprites();
     this.setUpPhysics();
 
-    this.targetCircle = this.add.circle(0, 0, 10, 0xff0000);
+    this.wooshSound = this.sound.add("woosh");
+
+    this.targetCircle = this.add.circle(0, 0, 10, this.targetDebugColor);
     this.targetCircle.setVisible(false);
+    this.targetCircle.setAlpha(0.0); // semi-transparent for now
     this.angleText = this.add.text(10, 10, '', { fontSize: '16px', fill: '#ffffff' });
+    this.angleText.setAlpha(0);
   }
 
   loadSprites() {
@@ -53,6 +60,8 @@ class BBGame extends Phaser.Scene {
     this.load.image("hoop", "/assets/basketball/BasketBall hoop.png");
     this.load.image("court", "/assets/basketball/BasketBall court.png");
     this.load.image("scoreboard", "/assets/basketball/scoreboard.png");
+    
+    this.load.audio("woosh", "/assets/basketball/WOOSH.mp3");
     
     this.player1.load(this);
     this.player2.load(this);
@@ -238,23 +247,43 @@ class BBGame extends Phaser.Scene {
 
   goalDetectedPlayer1() {
     // player1 scored on right hoop
+    let dist = Math.sqrt((gameWidth - 16 - this.basketball.lastShotX)**2 + (gameHeight/2 - this.basketball.lastShotY)**2);
+    let missPercent = 0;
+    if (dist > 200) missPercent = 0.8;
+    else if (dist > 150) missPercent = 0.5;
+    else if (dist > 100) missPercent = 0.2;
+    if (Math.random() < missPercent) {
+      console.log("Shot missed!");
+      return;
+    }
     console.log("Goal detected! Player 1 (Red) scored!");
     let points = 2;
     if (this.basketball && this.isShotOutsideThree(this.basketball.lastShotX, this.basketball.lastShotY, false)) {
       points = 3;
     }
     this.player1Score += points;
+    this.wooshSound.play();
     this.resetBall();
   }
 
   goalDetectedPlayer2() {
     // player2 scored on left hoop
+    let dist = Math.sqrt((16 - this.basketball.lastShotX)**2 + (gameHeight/2 - this.basketball.lastShotY)**2);
+    let missPercent = 0;
+    if (dist > 200) missPercent = 0.8;
+    else if (dist > 150) missPercent = 0.5;
+    else if (dist > 100) missPercent = 0.2;
+    if (Math.random() < missPercent) {
+      console.log("Shot missed!");
+      return;
+    }
     console.log("Goal detected! Player 2 (Blue) scored!");
     let points = 2;
     if (this.basketball && this.isShotOutsideThree(this.basketball.lastShotX, this.basketball.lastShotY, true)) {
       points = 3;
     }
     this.player2Score += points;
+    this.wooshSound.play();
     this.resetBall();
   }
 
