@@ -31,6 +31,8 @@ class BBGame extends Phaser.Scene {
 
     this.targetDebugColor = 0xff0000;
     this.wooshSound = undefined;
+    this.dribblingSound = undefined;
+    this.isDribblingSoundPlaying = false;
   }
 
   preload() {
@@ -47,6 +49,7 @@ class BBGame extends Phaser.Scene {
     this.setUpPhysics();
 
     this.wooshSound = this.sound.add("woosh");
+    this.dribblingSound = this.sound.add("dribbling");
 
     this.targetCircle = this.add.circle(0, 0, 10, this.targetDebugColor);
     this.targetCircle.setVisible(false);
@@ -62,6 +65,7 @@ class BBGame extends Phaser.Scene {
     this.load.image("scoreboard", "/assets/basketball/scoreboard.png");
     
     this.load.audio("woosh", "/assets/basketball/WOOSH.mp3");
+    this.load.audio("dribbling", "/assets/basketball/dribbling.mp3");
     
     this.player1.load(this);
     this.player2.load(this);
@@ -309,6 +313,12 @@ class BBGame extends Phaser.Scene {
       this.basketball.setScale(1);
     }
 
+    // Stop dribbling sound if playing
+    if (this.isDribblingSoundPlaying) {
+      this.dribblingSound.stop();
+      this.isDribblingSoundPlaying = false;
+    }
+
     // Reset players to their starting positions and stop movement
     if (this.player1 && this.player1.gameObject) {
       this.player1.gameObject.x = gameWidth / 4;
@@ -406,12 +416,24 @@ class BBGame extends Phaser.Scene {
           ease: 'Sine.easeInOut'
         });
       }
+
+      // Start dribbling sound if not playing
+      if (!this.isDribblingSoundPlaying) {
+        this.dribblingSound.play({ loop: true });
+        this.isDribblingSoundPlaying = true;
+      }
     } else {
       // Stop dribbling animation if running
       if (this.ballTween !== undefined) {
         this.ballTween.stop();
         this.ballTween = undefined;
         this.basketball.setScale(1);
+      }
+
+      // Stop dribbling sound if playing
+      if (this.isDribblingSoundPlaying) {
+        this.dribblingSound.stop();
+        this.isDribblingSoundPlaying = false;
       }
     }
     
