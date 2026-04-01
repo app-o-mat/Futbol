@@ -33,6 +33,7 @@ class BBGame extends Phaser.Scene {
     this.wooshSound = undefined;
     this.dribblingSound = undefined;
     this.isDribblingSoundPlaying = false;
+    this.dingSound = undefined;
   }
 
   preload() {
@@ -50,6 +51,7 @@ class BBGame extends Phaser.Scene {
 
     this.wooshSound = this.sound.add("woosh");
     this.dribblingSound = this.sound.add("dribbling");
+    this.dingSound = this.sound.add("ding");
 
     this.targetCircle = this.add.circle(0, 0, 10, this.targetDebugColor);
     this.targetCircle.setVisible(false);
@@ -66,6 +68,7 @@ class BBGame extends Phaser.Scene {
     
     this.load.audio("woosh", "/assets/basketball/WOOSH.mp3");
     this.load.audio("dribbling", "/assets/basketball/dribbling.mp3");
+    this.load.audio("ding", "/assets/basketball/DINGDING.mp3");
     
     this.player1.load(this);
     this.player2.load(this);
@@ -267,6 +270,9 @@ class BBGame extends Phaser.Scene {
     }
     this.player1Score += points;
     this.wooshSound.play();
+    if (points === 3) {
+      this.dingSound.play();
+    }
     this.resetBall();
   }
 
@@ -288,6 +294,9 @@ class BBGame extends Phaser.Scene {
     }
     this.player2Score += points;
     this.wooshSound.play();
+    if (points === 3) {
+      this.dingSound.play();
+    }
     this.resetBall();
   }
 
