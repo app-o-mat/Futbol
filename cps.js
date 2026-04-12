@@ -24,9 +24,10 @@ class CPSGame extends Phaser.Scene {
     // Add a 64x64 white circle in the center
     this.circle = this.add.circle(gameWidth / 2, gameHeight / 2, 150, 0xffffff);
 
-    // Add green outline circle
-    this.greenCircle = this.add.circle(gameWidth / 2, gameHeight / 2, 1, 0x00ff00, 0);
-    this.greenCircle.setStrokeStyle(2, 0x00ff00);
+    // Add random color outline circle
+    let randomColor = Phaser.Display.Color.HSLToColor(Math.random(), 1, 0.5);
+    this.colorCircle = this.add.circle(gameWidth / 2, gameHeight / 2, 1, randomColor, 0);
+    this.colorCircle.setStrokeStyle(2, randomColor.color);
 
     // Make the circle interactive
     this.circle.setInteractive();
@@ -49,8 +50,9 @@ class CPSGame extends Phaser.Scene {
         // Add animated click circle
         let clickX = this.input.activePointer.x;
         let clickY = this.input.activePointer.y;
-        let clickCircle = this.add.circle(clickX, clickY, 0, 0x00ff00, 0.5);
-        clickCircle.setStrokeStyle(2, 0x00ff00);
+        let randomColor = Phaser.Display.Color.HSLToColor(Math.random(), 1, 0.5);
+        let clickCircle = this.add.circle(clickX, clickY, 0, randomColor.color, 0.5);
+        clickCircle.setStrokeStyle(2, randomColor.color);
         this.tweens.add({
           targets: clickCircle,
           radius: 150,
@@ -74,7 +76,7 @@ class CPSGame extends Phaser.Scene {
       this.timeLeft = 10;
       this.timerText.setText('10 seconds');
       this.gameStarted = false;
-      this.greenCircle.setRadius(1);
+      this.colorCircle.setRadius(1);
       if (this.timerEvent) {
         this.timerEvent.remove();
         this.timerEvent = null;
