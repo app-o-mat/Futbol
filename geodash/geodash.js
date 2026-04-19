@@ -68,8 +68,8 @@ class GeoDashGame extends Phaser.Scene {
 
   update() {
     if (!this.gameOver) {
-      // Apply constant forward velocity (100 pixels per second)
-      this.playerX += 100 * (1 / 60); // Assuming 60 FPS
+      // Apply constant forward velocity (200 pixels per second)
+      this.playerX += 200 * (1 / 60); // Assuming 60 FPS
 
       // Apply jump physics
       if (this.isJumping) {
@@ -88,10 +88,26 @@ class GeoDashGame extends Phaser.Scene {
       // Update player position
       this.player.setPosition(this.playerX, this.playerY);
 
+      // Check collision with spikes
+      const playerSize = 32;
+      const spikeHeight = 32 * Math.sqrt(3) / 2;
+      
+      for (let spike of this.spikes) {
+        if (
+          this.playerX < spike.x + 16 &&
+          this.playerX + playerSize > spike.x - 16 &&
+          this.playerY < spike.y + spikeHeight / 2 &&
+          this.playerY + playerSize > spike.y - spikeHeight / 2
+        ) {
+          // Collision detected - restart the game
+          this.scene.restart();
+          return;
+        }
+      }
+
       // Check collision with flag
       const flagWidth = 40;
       const flagHeight = 60;
-      const playerSize = 32;
       
       if (
         this.playerX < this.flag.x + flagWidth / 2 &&
