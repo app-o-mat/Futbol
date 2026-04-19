@@ -12,6 +12,8 @@ class GeoDashGame extends Phaser.Scene {
     this.isJumping = false;
     this.playerVelocityY = 0;
     this.gameOver = false;
+    this.platforms = [];
+    this.platformConfigs = [];
   }
 
   preload() {
@@ -53,6 +55,28 @@ class GeoDashGame extends Phaser.Scene {
     const flagY = floorY - 80;
     this.flag = this.add.rectangle(flagX, flagY, 40, 60, 0xffff00);
 
+    // Create floating platforms
+    const platformHeight = 32;
+    const lastSpikeX = spikeBaseX + (3 * 500); // Position of last spike
+    
+    // Platform data: {x, width, height}
+    const platformConfigs = [
+      { x: lastSpikeX + 400, width: 256, heightAboveFloor: 64 },
+      { x: lastSpikeX + 700, width: 128, heightAboveFloor: 128 },
+      { x: lastSpikeX + 950, width: 64, heightAboveFloor: 192 }
+    ];
+    
+    for (let config of platformConfigs) {
+      const platformY = floorY - config.heightAboveFloor - platformHeight / 2;
+      const platform = this.add.rectangle(config.x, platformY, config.width, platformHeight, 0x333333);
+      this.platforms.push(platform);
+      this.platformConfigs.push({
+        platform: platform,
+        width: config.width,
+        platformY: platformY
+      });
+    }
+
     // Set up camera to follow player
     this.cameras.main.setBounds(0, 0, worldWidth, gameHeight);
     this.cameras.main.startFollow(this.player);
@@ -61,7 +85,7 @@ class GeoDashGame extends Phaser.Scene {
     this.input.keyboard.on('keydown-SPACE', () => {
       if (!this.isJumping && !this.gameOver) {
         this.isJumping = true;
-        this.playerVelocityY = -8; // Jump velocity
+        this.playerVelocityY = -10.0 ; // Jump velocity for 256px height
       }
     });
   }
@@ -103,6 +127,33 @@ class GeoDashGame extends Phaser.Scene {
           this.scene.restart();
           return;
         }
+      }
+
+      // Check collision with floating platforms
+      const floorY = gameHeight - 30;
+      let onPlatform = false;
+      for (let config of this.platformConfigs) {
+        const platformWidth = config.width;
+        const platformY = config.platformY;
+        
+        if (
+          this.playerX < config.platform.x + platformWidth / 2 &&
+          this.playerX + playerSize > config.platform.x - platformWidth / 2 &&
+          this.playerY + playerSize >= platformY - 16 &&
+          this.playerY + playerSize <= platformY + 16 &&
+          this.playerVelocityY >= 0
+        ) {
+          // Player is on platform
+          this.playerY = platformY - 16 - playerSize / 2;
+          this.isJumping = false;
+          this.playerVelocityY = 0;
+          onPlatform = true;
+        }
+      }
+
+      // If not on platform or floor, apply gravity for falling
+      if (!onPlatform && this.playerY < floorY - 31) {
+        this.isJumping = true;
       }
 
       // Check collision with flag
