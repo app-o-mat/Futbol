@@ -33,47 +33,31 @@ class GeoDashGame extends Phaser.Scene {
     this.playerY = floorY - 31;
     this.player = this.add.rectangle(this.playerX, this.playerY, 32, 32, 0xff0000);
 
-    // Create spikes array
-    this.spikes = [];
-    const spikeHeight = 32 * Math.sqrt(3) / 2;
-    const spikeBaseX = 600;
-    
-    for (let i = 0; i < 4; i++) {
-      const spikeX = spikeBaseX + (i * 500);
-      const spikeY = floorY - spikeHeight / 2;
-      const spikePoints = [
-        [0, -spikeHeight / 2], // Top point
-        [-16, spikeHeight / 2], // Bottom-left
-        [16, spikeHeight / 2]   // Bottom-right
-      ];
-      const spike = this.add.polygon(spikeX, spikeY, spikePoints, 0xff6600);
-      this.spikes.push(spike);
-    }
-
+    // Platforms are created from `platformPositions` below
     // Create flag at the end of the floor
     const flagX = worldWidth - 100;
     const flagY = floorY - 80;
     this.flag = this.add.rectangle(flagX, flagY, 40, 60, 0xffff00);
 
-    // Create floating platforms
+    // Create configurable platforms from an array of {x, y, width}
     const platformHeight = 32;
-    const lastSpikeX = spikeBaseX + (3 * 500); // Position of last spike
-    
-    // Platform data: {x, width, height}
-    const platformConfigs = [
-      { x: lastSpikeX + 400, width: 256, heightAboveFloor: 64 },
-      { x: lastSpikeX + 700, width: 128, heightAboveFloor: 128 },
-      { x: lastSpikeX + 950, width: 64, heightAboveFloor: 192 }
+    const defaultWidth = 200;
+
+    // Provide platform positions here (x and y are world coordinates)
+    const platformPositions = [
+      { x: 500, y: floorY - 100, width: 200 },
+      { x: 750, y: floorY - 200, width: 200 },
+      { x: 1000, y: floorY - 16, width: 200 }
     ];
-    
-    for (let config of platformConfigs) {
-      const platformY = floorY - config.heightAboveFloor - platformHeight / 2;
-      const platform = this.add.rectangle(config.x, platformY, config.width, platformHeight, 0x333333);
+
+    for (let pos of platformPositions) {
+      const w = pos.width || defaultWidth;
+      const platform = this.add.rectangle(pos.x, pos.y, w, platformHeight, 0x333333);
       this.platforms.push(platform);
       this.platformConfigs.push({
         platform: platform,
-        width: config.width,
-        platformY: platformY
+        width: w,
+        platformY: pos.y
       });
     }
 
@@ -112,22 +96,8 @@ class GeoDashGame extends Phaser.Scene {
       // Update player position
       this.player.setPosition(this.playerX, this.playerY);
 
-      // Check collision with spikes
+      // Player size for collisions
       const playerSize = 32;
-      const spikeHeight = 32 * Math.sqrt(3) / 2;
-      
-      for (let spike of this.spikes) {
-        if (
-          this.playerX < spike.x + 16 &&
-          this.playerX + playerSize > spike.x - 16 &&
-          this.playerY < spike.y + spikeHeight / 2 &&
-          this.playerY + playerSize > spike.y - spikeHeight / 2
-        ) {
-          // Collision detected - restart the game
-          this.scene.restart();
-          return;
-        }
-      }
 
       // Check collision with floating platforms
       const floorY = gameHeight - 30;
