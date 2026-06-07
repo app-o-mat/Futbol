@@ -14,6 +14,7 @@ class GeoDashGame extends Phaser.Scene {
     this.gameOver = false;
     this.platforms = [];
     this.platformConfigs = [];
+    this.spikes = [];
   }
 
   preload() {
@@ -43,12 +44,15 @@ class GeoDashGame extends Phaser.Scene {
     const platformHeight = 32;
     const defaultWidth = 200;
 
-    // Provide platform positions here (x and y are world coordinates)
-    const platformPositions = [
-      { x: 500, y: floorY - 100, width: 200 },
-      { x: 750, y: floorY - 200, width: 200 },
-      { x: 1000, y: floorY - 16, width: 200 }
-    ];
+    const platformASCII = `
+                                ####
+           ####         ##
+    ####          ####      #      
+             ^                         ^`;
+
+    // Parse ASCII art to generate platform and spike positions
+    const { platforms: platformPositions, spikes: spikePositions } = this.parsePlatformASCII(platformASCII, floorY);
+
 
     for (let pos of platformPositions) {
       const w = pos.width || defaultWidth;
@@ -59,6 +63,12 @@ class GeoDashGame extends Phaser.Scene {
         width: w,
         platformY: pos.y
       });
+    }
+
+    // Create spikes from ASCII art
+    for (let pos of spikePositions) {
+      const spike = this.add.polygon(pos.x, pos.y, [0, -16, 8, 8, -8, 8], 0xff6600);
+      this.spikes.push({ x: pos.x, y: pos.y, size: 16 });
     }
 
     // Set up camera to follow player
@@ -126,6 +136,19 @@ class GeoDashGame extends Phaser.Scene {
         this.isJumping = true;
       }
 
+      // Check collision with spikes
+      for (let spike of this.spikes) {
+        const spikeSize = spike.size;
+        if (
+          this.playerX < spike.x + spikeSize / 2 &&
+          this.playerX + playerSize > spike.x - spikeSize / 2 &&
+          this.playerY < spike.y + spikeSize / 2 &&
+          this.playerY + playerSize > spike.y - spikeSize / 2
+        ) {
+          this.gameOver = true;
+        }
+      }
+
       // Check collision with flag
       const flagWidth = 40;
       const flagHeight = 60;
@@ -139,6 +162,69 @@ class GeoDashGame extends Phaser.Scene {
         this.gameOver = true;
       }
     }
+  }
+
+  parsePlatformASCII(ascii, floorY) {
+    const lines = ascii.split('\n').filter(line => line.trim().length > 0);
+    const platformPositions = [];
+    const spikePositions = [];
+    const charWidth = 16; // Width per character in world units
+    const rowHeight = 100; // Vertical spacing between rows
+    const totalLines = lines.length;
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const rowIndex = totalLines - 1 - i;
+      let inPlatform = false;
+      let platformStart = 0;
+
+      for (let col = 0; col < line.length; col++) {
+        const char = line[col];
+
+        if (char === '#') {
+          if (!inPlatform) {
+            platformStart = col;
+            inPlatform = true;
+          }
+        } else if (char === '^') {
+          if (inPlatform) {
+            // End of platform before spike
+            const platformLength = col - platformStart;
+            const platformWidth = platformLength * charWidth;
+            const platformX = 200 + platformStart * charWidth + platformWidth / 2;
+            const platformY = floorY - 16 - rowIndex * rowHeight;
+
+            platformPositions.push({ x: platformX, y: platformY, width: platformWidth });
+            inPlatform = false;
+          }
+          // Add spike
+          const spikeX = 200 + col * charWidth + charWidth / 2;
+          const spikeY = floorY - 16 - rowIndex * rowHeight;
+          spikePositions.push({ x: spikeX, y: spikeY });
+        } else {
+          if (inPlatform) {
+            // End of platform
+            const platformLength = col - platformStart;
+            const platformWidth = platformLength * charWidth;
+            const platformX = 200 + platformStart * charWidth + platformWidth / 2;
+            const platformY = floorY - 16 - rowIndex * rowHeight;
+
+            platformPositions.push({ x: platformX, y: platformY, width: platformWidth });
+            inPlatform = false;
+          }
+        }
+      }
+
+      // Handle platform at end of line
+      if (inPlatform) {
+        const platformLength = line.length - platformStart;
+        const platformWidth = platformLength * charWidth;
+        const platformX = 200 + platformStart * charWidth + platformWidth / 2;
+        const platformY = floorY - 16 - rowIndex * rowHeight;
+
+        platformPositions.push({ x: platformX, y: platformY, width: platformWidth });
+      }
+    }
+    return { platforms: platformPositions, spikes: spikePositions };
   }
 }
 
