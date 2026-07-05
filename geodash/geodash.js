@@ -12,6 +12,7 @@ class GeoDashGame extends Phaser.Scene {
     this.isJumping = false;
     this.playerVelocityY = 0;
     this.gameOver = false;
+    this.gameStarted = false;
     this.platforms = [];
     this.platformConfigs = [];
     this.spikes = [];
@@ -49,8 +50,8 @@ class GeoDashGame extends Phaser.Scene {
     const platformASCII = `
                                 ####  
                          ####+                          #######                 
-                   ####                #     ###  #### 
-                ^   ^^^                 ^^^^^^^^^^^^^^^^^^^^          ^^^    ^`;
+                   ####                #     ###  ####           
+                ^   ^^^                 ^^^^^^^^^^^^^^^^^^^^^^^^^^  `;
 
     // Parse ASCII art to generate platform and spike positions
     const { platforms: platformPositions, spikes: spikePositions } = this.parsePlatformASCII(platformASCII, floorY);
@@ -79,15 +80,20 @@ class GeoDashGame extends Phaser.Scene {
 
     // Set up keyboard input for SPACE
     this.input.keyboard.on('keydown-SPACE', () => {
+      if (!this.gameStarted && !this.gameOver) {
+        this.gameStarted = true;
+        return;
+      }
+
       if (!this.isJumping && !this.gameOver) {
         this.isJumping = true;
-        this.playerVelocityY = -10.0 ; // Jump velocity for 256px height
+        this.playerVelocityY = -10.0; // Jump velocity
       }
     });
   }
 
   update() {
-    if (!this.gameOver) {
+    if (!this.gameOver && this.gameStarted) {
       // Apply constant forward velocity (200 pixels per second)
       this.playerX += 200 * (1 / 60); // Assuming 60 FPS
 
