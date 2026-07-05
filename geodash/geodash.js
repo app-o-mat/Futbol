@@ -18,7 +18,7 @@ class GeoDashGame extends Phaser.Scene {
   }
 
   preload() {
-    // No assets to load for now
+    this.load.image('jumpingPlayer', 'geodash/jumpinggameman.png');
   }
 
   create() {
@@ -29,10 +29,12 @@ class GeoDashGame extends Phaser.Scene {
     const floorY = gameHeight - 30;
     this.floor = this.add.rectangle(worldWidth / 2, floorY, worldWidth, 30, 0x8b7355);
 
-    // Create player (32x32 red square)
+    // Create player using the uploaded sprite image
     this.playerX = 100;
     this.playerY = floorY - 31;
-    this.player = this.add.rectangle(this.playerX, this.playerY, 32, 32, 0xff0000);
+    this.player = this.add.image(this.playerX, this.playerY, 'jumpingPlayer');
+    this.player.setDisplaySize(32, 32);
+    this.player.setOrigin(0.5, 0.5);
 
     // Platforms are created from `platformPositions` below
     // Create flag at the end of the floor
@@ -45,10 +47,10 @@ class GeoDashGame extends Phaser.Scene {
     const defaultWidth = 200;
 
     const platformASCII = `
-                                ####
-           ####         ##
-    ####          ####      #      
-             ^                         ^`;
+                                ####  
+                         ####+                          #######                 
+                   ####                #     ###  #### 
+                ^   ^^^                 ^^^^^^^^^^^^^^^^^^^^          ^^^    ^`;
 
     // Parse ASCII art to generate platform and spike positions
     const { platforms: platformPositions, spikes: spikePositions } = this.parsePlatformASCII(platformASCII, floorY);
@@ -180,10 +182,16 @@ class GeoDashGame extends Phaser.Scene {
       for (let col = 0; col < line.length; col++) {
         const char = line[col];
 
-        if (char === '#') {
+        if (char === '#' || char === '+') {
           if (!inPlatform) {
             platformStart = col;
             inPlatform = true;
+          }
+          // If it's a '+', add a spike on top of the platform
+          if (char === '+') {
+            const spikeX = 200 + col * charWidth + charWidth / 2;
+            const spikeY = floorY - 16 - rowIndex * rowHeight;
+            spikePositions.push({ x: spikeX, y: spikeY });
           }
         } else if (char === '^') {
           if (inPlatform) {
