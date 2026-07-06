@@ -49,9 +49,9 @@ class GeoDashGame extends Phaser.Scene {
 
     const platformASCII = `
                                 ####  
-                         ####+                          #######                 
-                   ####                #     ###  ####           
-                ^   ^^^                 ^^^^^^^^^^^^^^^^^^^^^^^^^^  `;
+                         ####+                          #######              ###          ######             #####    ###### ###      ######                                               ########
+                   ####                #     ###  ####         #######+####       #####++###     ########+++++#                              ####+###                           #####
+                ^   ^^^                 ^^^^^^^^^^^^^^^^^^^^^^^^^^               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ ^^          ^^^^           ^             ^^^`;
 
     // Parse ASCII art to generate platform and spike positions
     const { platforms: platformPositions, spikes: spikePositions } = this.parsePlatformASCII(platformASCII, floorY);
