@@ -15,12 +15,12 @@ class SwimMeet extends Phaser.Scene {
     this.swimmer1 = new Swimmer(
       "swimmer1",
       "",
-      "/assets/swimmeet/red-swim-spritesheet.png"
+      "assets/swimmeet/red-swim-spritesheet.png"
     );
     this.swimmer2 = new Swimmer(
       "swimmer2",
       "",
-      "/assets/swimmeet/blue-swim-spritesheet.png"
+      "assets/swimmeet/blue-swim-spritesheet.png"
     );
 
     this.cursors = undefined;
@@ -122,12 +122,12 @@ class SwimMeet extends Phaser.Scene {
 
   loadSounds() {
     // Load grenade sounds
-    this.load.audio("launchSound", "/assets/swimmeet/Launch.wav");
-    this.load.audio("boomSound", "/assets/swimmeet/BOOM.wav");
+    this.load.audio("launchSound", "assets/swimmeet/Launch.wav");
+    this.load.audio("boomSound", "assets/swimmeet/BOOM.wav");
   }
 
   loadPool() {
-    this.load.image("poolbg", "/assets/swimmeet/swim-lanes-background.png");
+    this.load.image("poolbg", "assets/swimmeet/swim-lanes-background.png");
   }
 
   loadSwimmers() {
@@ -138,7 +138,7 @@ class SwimMeet extends Phaser.Scene {
 
   loadAlien() {
     // Load alien spritesheet (320x32, 10 frames of 32x32)
-    this.load.spritesheet("alien", "/assets/swimmeet/alien.png", {
+    this.load.spritesheet("alien", "assets/swimmeet/alien.png", {
       frameWidth: 32,
       frameHeight: 32,
     });
@@ -146,7 +146,7 @@ class SwimMeet extends Phaser.Scene {
 
   loadGrenade() {
     // Load grenade spritesheet (9 frames of 32x32)
-    this.load.spritesheet("grenade", "/assets/swimmeet/grenade.png", {
+    this.load.spritesheet("grenade", "assets/swimmeet/grenade.png", {
       frameWidth: 32,
       frameHeight: 32,
     });
