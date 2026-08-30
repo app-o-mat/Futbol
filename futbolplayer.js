@@ -73,7 +73,7 @@ export class Player {
       frameHeight: 32,
     });
     // an important note: the audio file must be in the futbol directory
-    scene.load.audio("kick" + this.name, "/assets/futbol/kick.wav");
+    scene.load.audio("kick" + this.name, "assets/futbol/kick.wav");
   }
 
   addSounds(scene) {

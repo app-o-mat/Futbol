@@ -13,38 +13,38 @@ class Futbol extends Phaser.Scene {
 
     this.player = new Player(
       "player1",
-      "/assets/futbol/Player_A01.png",
-      "/assets/futbol/Player_A01_anim.png",
+      "assets/futbol/Player_A01.png",
+      "assets/futbol/Player_A01_anim.png",
     );
     this.playerKeeper = new Player(
       "player1Keeper",
-      "/assets/futbol/Player_A01.png",
-      "/assets/futbol/Player_A01_anim.png",
+      "assets/futbol/Player_A01.png",
+      "assets/futbol/Player_A01_anim.png",
     );
     this.playerKeeper.isAuto = true;
 
     this.player1Midfield = new Player(
       "player1Mid",
-      "/assets/futbol/Player_A01.png",
-      "/assets/futbol/Player_A01_anim.png",
+      "assets/futbol/Player_A01.png",
+      "assets/futbol/Player_A01_anim.png",
     );
 
     this.defensePlayer = new Player(
       "player2",
-      "/assets/futbol/Player_A02.png",
-      "/assets/futbol/Player_A02_anim.png",
+      "assets/futbol/Player_A02.png",
+      "assets/futbol/Player_A02_anim.png",
     );
     this.defensePlayerKeeper = new Player(
       "player2Keeper",
-      "/assets/futbol/Player_A02.png",
-      "/assets/futbol/Player_A02_anim.png",
+      "assets/futbol/Player_A02.png",
+      "assets/futbol/Player_A02_anim.png",
     );
     this.defensePlayerKeeper.isAuto = true;
 
     this.player2Midfield = new Player(
       "player2Mid",
-      "/assets/futbol/Player_A02.png",
-      "/assets/futbol/Player_A02_anim.png",
+      "assets/futbol/Player_A02.png",
+      "assets/futbol/Player_A02_anim.png",
     );
 
     this.cursors = undefined;
@@ -196,13 +196,13 @@ class Futbol extends Phaser.Scene {
   }
 
   loadField() {
-    this.load.image("field", "/assets/futbol/soccerfield_lines_crop_sm.png");
-    this.load.image("fieldtile", "/assets/futbol/soccer_tile.png");
-    this.load.image("nettile", "/assets/futbol/goal_tile.png");
+    this.load.image("field", "assets/futbol/soccerfield_lines_crop_sm.png");
+    this.load.image("fieldtile", "assets/futbol/soccer_tile.png");
+    this.load.image("nettile", "assets/futbol/goal_tile.png");
   }
 
   loadSoccerBall() {
-    this.load.image("ball", "/assets/futbol/soccer_ball.png");
+    this.load.image("ball", "assets/futbol/soccer_ball.png");
   }
 
   loadPlayer() {
