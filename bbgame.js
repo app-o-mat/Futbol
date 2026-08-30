@@ -61,14 +61,14 @@ class BBGame extends Phaser.Scene {
   }
 
   loadSprites() {
-    this.load.image("basketball", "/assets/basketball/basketball.png");
-    this.load.image("hoop", "/assets/basketball/BasketBall hoop.png");
-    this.load.image("court", "/assets/basketball/BasketBall court.png");
-    this.load.image("scoreboard", "/assets/basketball/scoreboard.png");
+    this.load.image("basketball", "assets/basketball/basketball.png");
+    this.load.image("hoop", "assets/basketball/BasketBall hoop.png");
+    this.load.image("court", "assets/basketball/BasketBall court.png");
+    this.load.image("scoreboard", "assets/basketball/scoreboard.png");
     
-    this.load.audio("woosh", "/assets/basketball/WOOSH.mp3");
-    this.load.audio("dribbling", "/assets/basketball/dribbling.mp3");
-    this.load.audio("ding", "/assets/basketball/DINGDING.mp3");
+    this.load.audio("woosh", "assets/basketball/WOOSH.mp3");
+    this.load.audio("dribbling", "assets/basketball/dribbling.mp3");
+    this.load.audio("ding", "assets/basketball/DINGDING.mp3");
     
     this.player1.load(this);
     this.player2.load(this);

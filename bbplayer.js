@@ -22,7 +22,7 @@ export class BBPlayer {
   }
 
   load(scene) {
-    scene.load.spritesheet(this.spriteSheetKey, `/assets/basketball/${this.spriteSheetKey}.png`, {
+    scene.load.spritesheet(this.spriteSheetKey, `assets/basketball/${this.spriteSheetKey}.png`, {
       frameWidth: 32,
       frameHeight: 32,
     });
