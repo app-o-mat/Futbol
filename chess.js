@@ -340,22 +340,22 @@ class ChessScene extends Phaser.Scene {
 
   preload() {
     // Load the white pawn image
-    this.load.image("pawn", "/assets/chess/white-pawn.jpg");
+    this.load.image("pawn", "assets/chess/white-pawn.jpg");
     // Load the white king image
-    this.load.image("king", "/assets/chess/white-king.jpeg");
+    this.load.image("king", "assets/chess/white-king.jpeg");
     // Load the white queen image
-    this.load.image("queen", "/assets/chess/white-queen.png");
+    this.load.image("queen", "assets/chess/white-queen.png");
     // Load remaining white pieces
-    this.load.image("white-rook", "/assets/chess/white-rook.jpeg");
-    this.load.image("white-knight", "/assets/chess/white-knight.jpg");
-    this.load.image("white-bishop", "/assets/chess/white-bishop.jpeg");
+    this.load.image("white-rook", "assets/chess/white-rook.jpeg");
+    this.load.image("white-knight", "assets/chess/white-knight.jpg");
+    this.load.image("white-bishop", "assets/chess/white-bishop.jpeg");
     // Load black pieces
-    this.load.image("black-pawn", "/assets/chess/black-pawn.png");
-    this.load.image("black-rook", "/assets/chess/black-rook.png");
-    this.load.image("black-knight", "/assets/chess/black-knight.jpg");
-    this.load.image("black-bishop", "/assets/chess/black-bishop.png");
-    this.load.image("black-queen", "/assets/chess/black-queen.png");
-    this.load.image("black-king", "/assets/chess/black-king.png");
+    this.load.image("black-pawn", "assets/chess/black-pawn.png");
+    this.load.image("black-rook", "assets/chess/black-rook.png");
+    this.load.image("black-knight", "assets/chess/black-knight.jpg");
+    this.load.image("black-bishop", "assets/chess/black-bishop.png");
+    this.load.image("black-queen", "assets/chess/black-queen.png");
+    this.load.image("black-king", "assets/chess/black-king.png");
   }
 
   createBoard() {
