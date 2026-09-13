@@ -3,6 +3,7 @@
 var game = undefined;
 var gameWidth = 800;
 var gameHeight = 600;
+var emojiFontFamily = '"Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif';
 
 class ComPhone extends Phaser.Scene {
   constructor() {
@@ -23,7 +24,10 @@ class ComPhone extends Phaser.Scene {
     this.player.body.setCollideWorldBounds(true);
 
     // Phone emoji
-    this.phone = this.add.text(this.player.x, this.player.y, '📱', { fontSize: '36px' });
+    this.phone = this.add.text(this.player.x, this.player.y, '📱', {
+      fontFamily: emojiFontFamily,
+      fontSize: '36px'
+    });
     this.phone.setOrigin(0.5);
     this.physics.add.existing(this.phone);
     this.phone.body.setSize(20, 24);
@@ -48,12 +52,16 @@ class ComPhone extends Phaser.Scene {
     this.livesText = this.add.text(16, 40, 'Lives: 3', { fontSize: '20px', fill: '#fff' });
 
     // Spawners
-    this.time.addEvent({ delay: 1200, callback: this.spawnObstacle, callbackScope: this, loop: true });
-    this.time.addEvent({ delay: 2500, callback: this.spawnHazard, callbackScope: this, loop: true });
-    this.time.addEvent({ delay: 3000, callback: this.spawnWifi, callbackScope: this, loop: true });
+    this.time.addEvent({ delay: 7000, callback: this.spawnObstacle, callbackScope: this, loop: true });
+    this.time.addEvent({ delay: 10000, callback: this.spawnHazard, callbackScope: this, loop: true });
+    this.time.addEvent({ delay: 5000, callback: this.spawnWifi, callbackScope: this, loop: true });
 
     // Simple tutorial text
-    this.add.text(gameWidth/2, 20, 'Avoid 💣 🧨 ⚡ — collect 📶 for better WiFi', { fontSize: '18px', fill: '#fff' }).setOrigin(0.5,0);
+    this.add.text(gameWidth/2, 20, 'Avoid 💣 🧨 ⚡ — collect 📶 for better WiFi', {
+      fontFamily: emojiFontFamily,
+      fontSize: '18px',
+      fill: '#fff'
+    }).setOrigin(0.5,0);
   }
 
   update() {
@@ -87,8 +95,11 @@ class ComPhone extends Phaser.Scene {
   spawnObstacle() {
     // Obstacles: standard moving mines (💣)
     const y = Phaser.Math.Between(50, gameHeight - 50);
-    const x = gameWidth + 40;
-    const ob = this.add.text(x, y, '💣', { fontSize: '32px' }).setOrigin(0.5);
+    const x = Phaser.Math.Between(gameWidth / 2, gameWidth - 40);
+    const ob = this.add.text(x, y, '💣', {
+      fontFamily: emojiFontFamily,
+      fontSize: '32px'
+    }).setOrigin(0.5);
     this.physics.add.existing(ob);
     // ensure body size matches emoji and set offset so collisions align
     if (ob.body) {
@@ -106,8 +117,11 @@ class ComPhone extends Phaser.Scene {
     // Hazard: bomb or lightning (🧨 or ⚡) with random choice
     const emoji = Phaser.Math.Between(0,1) === 0 ? '🧨' : '⚡';
     const y = Phaser.Math.Between(50, gameHeight - 50);
-    const x = gameWidth + 40;
-    const h = this.add.text(x, y, emoji, { fontSize: '36px' }).setOrigin(0.5);
+    const x = Phaser.Math.Between(gameWidth / 2, gameWidth - 40);
+    const h = this.add.text(x, y, emoji, {
+      fontFamily: emojiFontFamily,
+      fontSize: '36px'
+    }).setOrigin(0.5);
     this.physics.add.existing(h);
     if (h.body) {
       h.body.setSize(44, 44);
@@ -123,8 +137,11 @@ class ComPhone extends Phaser.Scene {
   spawnWifi() {
     // WiFi collectible
     const y = Phaser.Math.Between(60, gameHeight - 60);
-    const x = gameWidth + 40;
-    const w = this.add.text(x, y, '📶', { fontSize: '36px' }).setOrigin(0.5);
+    const x = Phaser.Math.Between(gameWidth / 2, gameWidth - 40);
+    const w = this.add.text(x, y, '📶', {
+      fontFamily: emojiFontFamily,
+      fontSize: '36px'
+    }).setOrigin(0.5);
     this.physics.add.existing(w);
     if (w.body) {
       w.body.setSize(40, 40);

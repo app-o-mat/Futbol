@@ -13,3 +13,7 @@ Here is how the game works.
 2. Use emojis for the pieces of the game. You can look at blatman for the code that does that.
 
 3. Put mines and bombs and lightning around the game
+
+
+-----------
+
