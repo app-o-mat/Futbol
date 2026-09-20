@@ -10,6 +10,7 @@ class ComPhone extends Phaser.Scene {
     super();
     this.score = 0;
     this.lives = 3;
+    this.carriedExtinguisher = null;
   }
 
   preload() {}
@@ -38,11 +39,13 @@ class ComPhone extends Phaser.Scene {
     this.obstacles = this.physics.add.group();
     this.hazards = this.physics.add.group();
     this.wifis = this.physics.add.group();
+    this.extinguishers = this.physics.add.group();
 
     // Collisions
     this.physics.add.overlap(this.phone, this.obstacles, this.hitObstacle, null, this);
     this.physics.add.overlap(this.phone, this.hazards, this.hitObstacle, null, this);
     this.physics.add.overlap(this.phone, this.wifis, this.collectWifi, null, this);
+    this.physics.add.overlap(this.phone, this.extinguishers, this.collectExtinguisher, null, this);
 
     // Controls
     this.cursors = this.input.keyboard.createCursorKeys();
@@ -52,9 +55,24 @@ class ComPhone extends Phaser.Scene {
     this.livesText = this.add.text(16, 40, 'Lives: 3', { fontSize: '20px', fill: '#fff' });
 
     // Spawners
-    this.time.addEvent({ delay: 7000, callback: this.spawnObstacle, callbackScope: this, loop: true });
-    this.time.addEvent({ delay: 10000, callback: this.spawnHazard, callbackScope: this, loop: true });
+    this.obstacleSpawnDelay = 7000;
+    this.obstacleSpawnCount = 0;
+    this.obstacleTimer = this.time.addEvent({
+      delay: this.obstacleSpawnDelay,
+      callback: this.spawnObstacle,
+      callbackScope: this,
+      loop: true
+    });
+    this.hazardSpawnDelay = 10000;
+    this.hazardSpawnCount = 0;
+    this.hazardTimer = this.time.addEvent({
+      delay: this.hazardSpawnDelay,
+      callback: this.spawnHazard,
+      callbackScope: this,
+      loop: true
+    });
     this.time.addEvent({ delay: 5000, callback: this.spawnWifi, callbackScope: this, loop: true });
+    this.time.addEvent({ delay: 15000, callback: this.spawnExtinguisher, callbackScope: this, loop: true });
 
     // Simple tutorial text
     this.add.text(gameWidth/2, 20, 'Avoid 💣 🧨 ⚡ — collect 📶 for better WiFi', {
@@ -86,16 +104,28 @@ class ComPhone extends Phaser.Scene {
     this.phone.x = this.player.x;
     this.phone.y = this.player.y;
 
+    if (this.carriedExtinguisher) {
+      this.carriedExtinguisher.x = this.phone.x;
+      this.carriedExtinguisher.y = this.phone.y - 32;
+    }
+
     // Cleanup off-screen items
     this.obstacles.children.each((o) => { if (o.x < -50) o.destroy(); });
     this.hazards.children.each((o) => { if (o.x < -50) o.destroy(); });
     this.wifis.children.each((o) => { if (o.x < -50) o.destroy(); });
+    this.extinguishers.children.each((o) => { if (o.x < -50) o.destroy(); });
   }
 
   spawnObstacle() {
     // Obstacles: standard moving mines (💣)
+    this.obstacleSpawnCount += 1;
+    if (this.obstacleSpawnCount % 2 === 0) {
+      this.obstacleSpawnDelay = Math.max(200, this.obstacleSpawnDelay - 200);
+      this.obstacleTimer.delay = this.obstacleSpawnDelay;
+    }
+
     const y = Phaser.Math.Between(50, gameHeight - 50);
-    const x = Phaser.Math.Between(gameWidth / 2, gameWidth - 40);
+    const x = Phaser.Math.Between(40, gameWidth - 40);
     const ob = this.add.text(x, y, '💣', {
       fontFamily: emojiFontFamily,
       fontSize: '32px'
@@ -115,9 +145,15 @@ class ComPhone extends Phaser.Scene {
 
   spawnHazard() {
     // Hazard: bomb or lightning (🧨 or ⚡) with random choice
+    this.hazardSpawnCount += 1;
+    if (this.hazardSpawnCount % 2 === 0) {
+      this.hazardSpawnDelay = Math.max(200, this.hazardSpawnDelay - 200);
+      this.hazardTimer.delay = this.hazardSpawnDelay;
+    }
+
     const emoji = Phaser.Math.Between(0,1) === 0 ? '🧨' : '⚡';
     const y = Phaser.Math.Between(50, gameHeight - 50);
-    const x = Phaser.Math.Between(gameWidth / 2, gameWidth - 40);
+    const x = Phaser.Math.Between(40, gameWidth - 40);
     const h = this.add.text(x, y, emoji, {
       fontFamily: emojiFontFamily,
       fontSize: '36px'
@@ -137,7 +173,7 @@ class ComPhone extends Phaser.Scene {
   spawnWifi() {
     // WiFi collectible
     const y = Phaser.Math.Between(60, gameHeight - 60);
-    const x = Phaser.Math.Between(gameWidth / 2, gameWidth - 40);
+    const x = Phaser.Math.Between(40, gameWidth - 40);
     const w = this.add.text(x, y, '📶', {
       fontFamily: emojiFontFamily,
       fontSize: '36px'
@@ -154,8 +190,38 @@ class ComPhone extends Phaser.Scene {
     console.log('spawnWifi at', x, y);
   }
 
+  spawnExtinguisher() {
+    if (this.carriedExtinguisher) {
+      return;
+    }
+
+    const y = Phaser.Math.Between(60, gameHeight - 60);
+    const x = Phaser.Math.Between(40, gameWidth - 40);
+    const extinguisher = this.add.text(x, y, '🧯', {
+      fontFamily: emojiFontFamily,
+      fontSize: '36px'
+    }).setOrigin(0.5);
+    this.physics.add.existing(extinguisher);
+    if (extinguisher.body) {
+      extinguisher.body.setSize(40, 40);
+      extinguisher.body.setOffset(-20, -20);
+      extinguisher.body.setVelocityX(-Phaser.Math.Between(80, 160));
+      extinguisher.body.setAllowGravity(false);
+    }
+    extinguisher.setDepth(10);
+    this.extinguishers.add(extinguisher);
+    console.log('spawnExtinguisher at', x, y);
+  }
+
   hitObstacle(phone, obstacle) {
     obstacle.destroy();
+
+    if (this.carriedExtinguisher) {
+      this.carriedExtinguisher.destroy();
+      this.carriedExtinguisher = null;
+      return;
+    }
+
     this.lives -= 1;
     this.livesText.setText('Lives: ' + this.lives);
     if (this.lives <= 0) {
@@ -167,6 +233,17 @@ class ComPhone extends Phaser.Scene {
     wifi.destroy();
     this.score += 1;
     this.scoreText.setText('Score: ' + this.score);
+  }
+
+  collectExtinguisher(phone, extinguisher) {
+    if (this.carriedExtinguisher) {
+      return;
+    }
+
+    this.extinguishers.remove(extinguisher, false, false);
+    extinguisher.body.enable = false;
+    extinguisher.setDepth(21);
+    this.carriedExtinguisher = extinguisher;
   }
 
   gameOver() {
