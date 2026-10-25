@@ -21,6 +21,10 @@ class SleddingGame extends Phaser.Scene {
     this.gameOver = false;
   }
 
+  preload() {
+    this.load.image('snowman', 'assets/sleadgame/snowman.png');
+  }
+
   create() {
     this.cameras.main.setBackgroundColor('#8ed1ff');
     this.groundBaseY = gameHeight - groundHeight / 2;
@@ -149,16 +153,22 @@ class SleddingGame extends Phaser.Scene {
       emoji = '●';
     }
 
-    const sprite = this.add.text(x, startY, emoji, {
-      fontSize: kind === 'gift' ? '28px' : kind === 'rock' ? '70px' : '38px',
-      fill: kind === 'rock' ? '#000000' : '#000000',
-    }).setOrigin(0.5);
+    const sprite = kind === 'snowman'
+      ? this.add.image(x, startY, 'snowman').setOrigin(0.5)
+      : this.add.text(x, startY, emoji, {
+        fontSize: kind === 'gift' ? '28px' : kind === 'rock' ? '70px' : '38px',
+        fill: '#000000',
+      }).setOrigin(0.5);
+    const baseScale = kind === 'snowman'
+      ? Math.min(54 / sprite.width, 62 / sprite.height)
+      : 1;
 
     this.objects.push({
       kind,
       x,
       z: 1400,
       sprite,
+      baseScale,
     });
   }
 
@@ -219,7 +229,7 @@ class SleddingGame extends Phaser.Scene {
       const scale = 0.45 + progress * 2.5;
 
       item.sprite.setPosition(screenX, screenY);
-      item.sprite.setScale(scale);
+      item.sprite.setScale(scale * item.baseScale);
       item.sprite.setDepth(4 + progress);
 
       const dx = Math.abs(screenX - this.playerX);
