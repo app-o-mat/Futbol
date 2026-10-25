@@ -23,11 +23,21 @@ class SleddingGame extends Phaser.Scene {
 
   preload() {
     this.load.image('snowman', 'assets/sleadgame/snowman.png');
+    this.load.spritesheet('sled', 'assets/sleadgame/sledanimation.png', {
+      frameWidth: 32,
+      frameHeight: 32,
+    });
   }
 
   create() {
     this.cameras.main.setBackgroundColor('#8ed1ff');
     this.groundBaseY = gameHeight - groundHeight / 2;
+    this.anims.create({
+      key: 'sled-animation',
+      frames: this.anims.generateFrameNumbers('sled', { start: 0, end: 7 }),
+      frameRate: 8,
+      repeat: -1,
+    });
 
     this.ground = this.add.rectangle(gameWidth / 2, this.groundBaseY, gameWidth, groundHeight, 0xffffff);
     this.ground.setDepth(1);
@@ -57,9 +67,11 @@ class SleddingGame extends Phaser.Scene {
       padding: { x: 18, y: 8 },
     }).setOrigin(0.5).setVisible(false);
 
-    this.player = this.add.text(this.playerX, this.groundBaseY - 44, '🛷', {
-      fontSize: '46px',
-    }).setOrigin(0.5).setDepth(5);
+    this.player = this.add.sprite(this.playerX, this.groundBaseY - 44, 'sled')
+      .setDisplaySize(46, 46)
+      .setOrigin(0.5)
+      .setDepth(5)
+      .play('sled-animation');
 
     this.deathDot = this.add.circle(this.playerX, this.player.y, 6, 0xff0000, 1).setVisible(false).setDepth(20);
 
