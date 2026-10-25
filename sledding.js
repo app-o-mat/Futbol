@@ -65,7 +65,7 @@ class SleddingGame extends Phaser.Scene {
       fontStyle: 'bold',
       backgroundColor: '#000000',
       padding: { x: 18, y: 8 },
-    }).setOrigin(0.5).setVisible(false);
+    }).setOrigin(0.5).setVisible(false).setDepth(30);
 
     this.player = this.add.sprite(this.playerX, this.groundBaseY - 44, 'sled')
       .setDisplaySize(46, 46)
@@ -119,6 +119,34 @@ class SleddingGame extends Phaser.Scene {
     const worldShift = this.playerY * 0.75;
     this.player.setPosition(this.playerX, this.groundBaseY - 44 - this.playerY + worldShift);
     this.deathDot.setPosition(this.playerX, this.player.y + 12);
+  }
+
+  playDeathExplosion(x, y) {
+    const flash = this.add.rectangle(gameWidth / 2, gameHeight / 2, gameWidth, gameHeight, 0xfff3bd)
+      .setAlpha(0)
+      .setDepth(14);
+    const burst = this.add.container(x, y, [
+      this.add.circle(0, 0, 15, 0xe93623),
+      this.add.circle(0, 0, 10, 0xff9418),
+      this.add.circle(0, 0, 5, 0xfff3bd),
+    ]).setAlpha(0.95).setDepth(15);
+
+    this.tweens.add({
+      targets: flash,
+      alpha: 0.85,
+      duration: 70,
+      yoyo: true,
+      hold: 30,
+      onComplete: () => flash.destroy(),
+    });
+    this.tweens.add({
+      targets: burst,
+      scale: 60,
+      alpha: 0,
+      duration: 700,
+      ease: 'Cubic.easeOut',
+      onComplete: () => burst.destroy(),
+    });
   }
 
   getObstacleHitbox(item, screenX, screenY, progress) {
@@ -272,6 +300,7 @@ class SleddingGame extends Phaser.Scene {
 
         if (progress > 0.2 && isThreatAtThisPoint && isColliding) {
           this.gameOver = true;
+          this.playDeathExplosion(screenX, screenY);
           this.deathDot.setPosition(screenX, screenY);
           this.deathDot.setVisible(true);
           this.statusText.setText('You hit an obstacle! Press R to restart');
