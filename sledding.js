@@ -23,6 +23,8 @@ class SleddingGame extends Phaser.Scene {
 
   preload() {
     this.load.image('snowman', 'assets/sleadgame/snowman.png');
+    this.load.audio('death-sound', 'assets/sleadgame/BOOOOOOOm.wav');
+    this.load.audio('gift-sound', 'assets/sleadgame/chaching.wav');
     this.load.spritesheet('sled', 'assets/sleadgame/sledanimation.png', {
       frameWidth: 32,
       frameHeight: 32,
@@ -279,6 +281,7 @@ class SleddingGame extends Phaser.Scene {
         if (dx < 34 && dy < 50) {
           this.giftsCollected += 1;
           this.giftsText.setText('Gifts: ' + this.giftsCollected);
+          this.sound.play('gift-sound');
           item.sprite.destroy();
           this.objects.splice(i, 1);
           continue;
@@ -300,6 +303,7 @@ class SleddingGame extends Phaser.Scene {
 
         if (progress > 0.2 && isThreatAtThisPoint && isColliding) {
           this.gameOver = true;
+          this.sound.play('death-sound');
           this.playDeathExplosion(screenX, screenY);
           this.deathDot.setPosition(screenX, screenY);
           this.deathDot.setVisible(true);
