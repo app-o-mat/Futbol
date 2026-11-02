@@ -118,8 +118,7 @@ class SleddingGame extends Phaser.Scene {
   }
 
   setPlayerPosition() {
-    const worldShift = this.playerY * 0.75;
-    this.player.setPosition(this.playerX, this.groundBaseY - 44 - this.playerY + worldShift);
+    this.player.setPosition(this.playerX, this.groundBaseY - 44 - this.playerY);
     this.deathDot.setPosition(this.playerX, this.player.y + 12);
   }
 
@@ -243,8 +242,6 @@ class SleddingGame extends Phaser.Scene {
       this.velocityY = 0;
     }
 
-    const worldShift = this.playerY * 0.75;
-    this.ground.y = this.groundBaseY + worldShift;
     this.setPlayerPosition();
 
     this.spawnTimer += dt;
@@ -290,18 +287,20 @@ class SleddingGame extends Phaser.Scene {
         const obstacleHitbox = this.getObstacleHitbox(item, screenX, screenY, progress);
         const playerHalfWidth = 25;
         const playerHalfHeight = 20;
-        const playerBottom = this.player.y + playerHalfHeight;
-        const obstacleBottom = screenY + obstacleHitbox.halfHeight;
-        const offWhiteLineY = this.groundBaseY - 25;
-        const isTreeOrSnowman = item.kind === 'tree' || item.kind === 'snowman';
-        const isThreatAtThisPoint = !isTreeOrSnowman || obstacleBottom >= offWhiteLineY;
+        const horizonTop = this.groundBaseY - 25;
+        const horizonBottom = horizonTop + 30;
+        const obstacleHasPassedUs = screenY > horizonBottom;
+        if (obstacleHasPassedUs) {
+          item.sprite.destroy();
+          this.objects.splice(i, 1);
+          continue;
+        }
 
-        const obstacleHasPassedUs = obstacleBottom > playerBottom + 10;
-        const isColliding = !obstacleHasPassedUs &&
-          dx < obstacleHitbox.halfWidth + playerHalfWidth &&
+        const isOnHorizon = screenY >= horizonTop && screenY <= horizonBottom;
+        const isColliding = dx < obstacleHitbox.halfWidth + playerHalfWidth &&
           dy < obstacleHitbox.halfHeight + playerHalfHeight;
 
-        if (progress > 0.2 && isThreatAtThisPoint && isColliding) {
+        if (progress > 0.2 && !isOnHorizon && isColliding) {
           this.gameOver = true;
           this.sound.play('death-sound');
           this.playDeathExplosion(screenX, screenY);
