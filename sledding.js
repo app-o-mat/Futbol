@@ -22,6 +22,7 @@ class SleddingGame extends Phaser.Scene {
   }
 
   preload() {
+    this.load.image('cloud', 'assets/sleadgame/cloud.png');
     this.load.image('snowman', 'assets/sleadgame/snowman.png');
     this.load.audio('death-sound', 'assets/sleadgame/BOOOOOOOm.wav');
     this.load.audio('gift-sound', 'assets/sleadgame/chaching.wav');
@@ -34,6 +35,17 @@ class SleddingGame extends Phaser.Scene {
   create() {
     this.cameras.main.setBackgroundColor('#8ed1ff');
     this.groundBaseY = gameHeight - groundHeight / 2;
+    this.clouds = [
+      { x: 70, y: 85, width: 135, speed: 34 },
+      { x: 310, y: 175, width: 165, speed: 48 },
+      { x: 560, y: 110, width: 120, speed: 27 },
+      { x: 790, y: 225, width: 150, speed: 40 },
+    ].map(({ x, y, width, speed }) => {
+      const sprite = this.add.image(x, y, 'cloud')
+        .setDisplaySize(width, width * 0.57)
+        .setDepth(0);
+      return { sprite, speed };
+    });
     this.anims.create({
       key: 'sled-animation',
       frames: this.anims.generateFrameNumbers('sled', { start: 0, end: 7 }),
@@ -214,11 +226,17 @@ class SleddingGame extends Phaser.Scene {
   }
 
   update(time, delta) {
+    const dt = delta / 1000;
+    this.clouds.forEach(({ sprite, speed }) => {
+      sprite.x += speed * dt;
+      if (sprite.x > gameWidth + sprite.displayWidth / 2) {
+        sprite.x = -sprite.displayWidth / 2;
+      }
+    });
+
     if (this.gameOver) {
       return;
     }
-
-    const dt = delta / 1000;
 
     if (this.cursors.left.isDown) {
       this.playerX -= 260 * dt;
